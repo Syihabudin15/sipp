@@ -1,0 +1,234 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum EStatusDapem {
+  DRAFT
+  PENDING
+  SETUJU
+  TOLAK
+}
+
+enum EStatusFinal {
+  DRAFT
+  ANTRI
+  PROSES
+  TRANSFER
+  LUNAS
+  GAGAL
+}
+
+model Role {
+  id         String @id
+  name       String @unique
+  permission String @db.Text
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  User       User[]
+}
+
+model User {
+  id           String  @id
+  nip          String  @unique
+  fullname     String
+  username     String  @unique
+  password     String
+  email        String?
+  phone        String?
+  target       Int     @default(0)
+  Cabang       Cabang  @relation(fields: [cabangId], references: [id])
+  Sumdan       Sumdan? @relation(fields: [sumdanId], references: [id])
+  CreateDDapem Dapem[] @relation("CreateDapemRelation")
+  AODapem      Dapem[] @relation("AODapemRelation")
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  Role       Role     @relation(fields: [roleId], references: [id])
+  roleId     String
+  cabangId   String
+  sumdanId   String?
+}
+
+model Area {
+  id   String @id
+  name String
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  Cabang     Cabang[]
+}
+
+model Cabang {
+  id      String  @id
+  name    String
+  alamat  String? @db.Text
+  no_telp String?
+  Area    Area    @relation(fields: [areaId], references: [id])
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  areaId     String
+  User       User[]
+}
+
+model Sumdan {
+  id          String  @id
+  name        String
+  code        String
+  sk_akad     String  @db.Text
+  description String? @db.Text
+  logo        String?
+  alamat      String? @db.Text
+  no_telp     String?
+  ttd_akad    String?
+  ttd_jabatan String?
+  tbo         Int     @default(3)
+
+  status           Boolean            @default(true)
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @default(now())
+  ProdukPembiayaan ProdukPembiayaan[]
+  users            User[]
+}
+
+model ProdukPembiayaan {
+  id            String @id
+  name          String
+  margin        Float
+  margin_sumdan Float
+  dsr           Float
+  c_adm         Float
+  c_adm_sumdan  Float
+  c_asuransi    Float
+  c_tatalaksana Int
+  c_materai     Int
+  c_rekening    Int
+  max_tenor     Int
+  max_plafond   Int
+  min_usia      Int
+  max_usia      Int
+  usia_lunas    Int
+
+  Sumdan     Sumdan   @relation(fields: [sumdanId], references: [id])
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  sumdanId   String
+  dapems     Dapem[]
+}
+
+model JenisPembiayaan {
+  id       String @id
+  name     String
+  blokir   Int
+  c_mutasi Int    @default(0)
+
+  status_pelunasan Boolean  @default(false)
+  status_mutasi    Boolean  @default(false)
+  status           Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now())
+  dapems           Dapem[]
+}
+
+model Debitur {
+  nopen               String  @unique
+  nama_pensiunan      String
+  tgl_lahir_pensiunan String
+  gaji_pensiun        Int
+  nama_penerima       String
+  tgl_lahir_penerima  String
+  alm_peserta         String
+  kecamatan           String
+  kota                String
+  kantor_bayar        String
+  tmt_pensiun         String
+  no_skep             String
+  tgl_skep            String
+  nama_skep           String?
+  jenis_skep          String?
+  kode_jiwa           Int?
+  penerbit_skep       String?
+  npwp                String?
+  no_telepon          String?
+  pangkat             String?
+  awal_flagging       String?
+  akhir_flagging      String?
+  mitra_flagging      String?
+  keluarga            String? @db.Text
+  dapems              Dapem[]
+}
+
+model Dapem {
+  id               String        @id
+  tenor            Int
+  plafond          Int
+  margin           Float
+  margin_sumdan    Float
+  c_adm            Float
+  c_adm_sumdan     Float
+  c_asuransi       Float
+  c_tatalaksana    Int
+  c_materai        Int
+  c_rekening       Int
+  c_mutasi         Int
+  c_blokir         Int
+  c_pelunasan      Int
+  status_final     EStatusFinal  @default(DRAFT)
+  final_at         DateTime?
+  verif_status     EStatusDapem?
+  verif_date       DateTime?
+  slik_status      EStatusDapem?
+  slik_date        DateTime?
+  approv_status    EStatusDapem?
+  approv_date      DateTime?
+  pelunasan_status EStatusDapem?
+  pelunasan_date   DateTime?
+  pelunasan_ke     String?
+  mutasi_status    EStatusDapem?
+  mutasi_date      DateTime?
+  mutasi_from      String?
+  mutasi_ke        String?
+  tbo              Int
+
+  file_pelunasan  String?
+  file_mutasi     String?
+  file_slik       String?
+  file_pengajuan  String?
+  file_wawancara  String?
+  file_asuransi   String?
+  file_akad       String?
+  file_pencairan  String? @db.Text
+  video_pencairan String?
+
+  Debitur          Debitur          @relation(fields: [nopen], references: [nopen])
+  ProdukPembiayaan ProdukPembiayaan @relation(fields: [produkPembiayaanId], references: [id])
+  JenisPembiayaan  JenisPembiayaan  @relation(fields: [jenisPembiayaanId], references: [id])
+
+  status             Boolean  @default(true)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @default(now())
+  nopen              String
+  produkPembiayaanId String
+  jenisPembiayaanId  String
+  CreatedBy          User     @relation("CreateDapemRelation", fields: [createdById], references: [id])
+  createdById        String
+  AO                 User     @relation("AODapemRelation", fields: [aoId], references: [id])
+  aoId               String
+}

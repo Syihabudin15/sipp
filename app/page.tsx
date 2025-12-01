@@ -1,65 +1,98 @@
-import Image from "next/image";
+"use client";
+import { Form, Input, Button, Layout, Row, Col, Card } from "antd";
+import { UserOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
+const { Content } = Layout;
 
-export default function Home() {
+export default function Page() {
+  const onFinish = (values: any) => {
+    console.log("Nilai yang diterima dari formulir: ", values);
+    // Di sini Anda akan menambahkan logika otentikasi (misalnya, memanggil API)
+    alert(`Berhasil Login! Username: ${values.username}`);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <Layout style={{ minHeight: "100vh", backgroundColor: "blue" }}>
+      <Content style={{ padding: "0 50px" }}>
+        {/* Row dan Col untuk menempatkan formulir di tengah halaman */}
+        <Row justify="center" align="middle" style={{ minHeight: "100vh" }}>
+          <Col xs={24} lg={8}>
+            <Card
+              title={
+                <div
+                  style={{
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <img
+                    src="/globe.svg"
+                    alt="Logo"
+                    style={{ height: "40px", marginBottom: "8px" }}
+                  />
+                  <h2 className="font-bold text-xl mb-4">
+                    {process.env.NEXT_PUBLIC_APP_FULLNAME || "GEMA"}
+                  </h2>
+                </div>
+              }
+              style={{
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                padding: 20,
+              }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+              <Form name="normal_login" onFinish={onFinish}>
+                {/* Input Username */}
+                <Form.Item
+                  name="username"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Tolong masukkan Username Anda!",
+                    },
+                  ]}
+                >
+                  <Input
+                    prefix={<UserOutlined className="site-form-item-icon" />}
+                    placeholder="Username"
+                    size="large"
+                  />
+                </Form.Item>
+
+                {/* Input Password */}
+                <Form.Item
+                  name="password"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Tolong masukkan Password Anda!",
+                    },
+                  ]}
+                >
+                  <Input
+                    prefix={<LockOutlined className="site-form-item-icon" />}
+                    type="password"
+                    placeholder="Password"
+                    size="large"
+                  />
+                </Form.Item>
+                {/* Tombol Submit */}
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    style={{ width: "100%", marginTop: 10 }}
+                    size="large"
+                    icon={<LoginOutlined />}
+                  >
+                    Log in
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Card>
+          </Col>
+        </Row>
+      </Content>
+    </Layout>
   );
 }

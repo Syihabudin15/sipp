@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+// Impor ConfigProvider dari antd
+import { App, ConfigProvider } from "antd";
+import { UserProvider } from "@/components/contexts/UserContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +30,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        {/* Gunakan ConfigProvider untuk mengaplikasikan font ke komponen Ant Design */}
+        <ConfigProvider
+          theme={{
+            token: {
+              // Setel fontFamily menggunakan variabel CSS Next.js font
+              fontFamily: "var(--font-geist-mono)",
+            },
+          }}
+        >
+          <App>
+            <UserProvider>{children}</UserProvider>
+          </App>
+        </ConfigProvider>
       </body>
     </html>
   );
