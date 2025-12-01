@@ -152,6 +152,7 @@ export default function Page() {
     }));
   }, [
     data.tgl_lahir_penerima,
+    data.gaji,
     data.jenisPembiayaanId,
     data.produkPembiayaanId,
     data.c_blokir,
@@ -218,7 +219,7 @@ export default function Page() {
                   required: true,
                   class: "flex-1",
                   value: IDRFormat(data.gaji),
-                  onChange: (e: any) =>
+                  onChange: (e: string) =>
                     setData({ ...data, gaji: IDRToNumber(e) }),
                 }}
               />
@@ -233,7 +234,7 @@ export default function Page() {
                   value: moment(data.tgl_lahir_penerima, "DD-MM-YYYY").format(
                     "YYYY-MM-DD"
                   ),
-                  onChange: (e: any) =>
+                  onChange: (e: string) =>
                     !isNaN(new Date(e).getDate()) &&
                     setData({
                       ...data,
@@ -329,7 +330,7 @@ export default function Page() {
                   required: true,
                   class: "flex-1",
                   value: data.tenor,
-                  onChange: (e: any) =>
+                  onChange: (e: string) =>
                     setData({
                       ...data,
                       tenor:
@@ -361,7 +362,7 @@ export default function Page() {
                   required: true,
                   class: "flex-1",
                   value: IDRFormat(data.plafond),
-                  onChange: (e: any) =>
+                  onChange: (e: string) =>
                     setData({
                       ...data,
                       plafond:
@@ -719,6 +720,7 @@ const defaultDapem: IDapem = {
   approv_status: null,
   approv_date: null,
   tbo: 0,
+  penggunaan: null,
 
   mutasi_status: null,
   mutasi_from: null,

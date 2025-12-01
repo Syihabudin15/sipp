@@ -29,7 +29,9 @@ export const GET = async (request: NextRequest) => {
       updated_at: "desc",
     },
     include: {
-      Cabang: true,
+      Cabang: {
+        include: { Area: true },
+      },
       Sumdan: true,
       Role: true,
     },
@@ -72,7 +74,7 @@ export const POST = async (request: NextRequest) => {
     }
     const generateId = await generateUserId();
     const generateNIP = await generateUserNIP(saved.cabangId);
-    const pass = await bcrypt.hash(body.password, 10);
+    const pass = await bcrypt.hash(password, 10);
     await prisma.user.create({
       data: { id: generateId, nip: generateNIP, password: pass, ...saved },
     });

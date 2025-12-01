@@ -18,6 +18,7 @@ export const GET = async (request: NextRequest) => {
     orderBy: {
       id: "desc",
     },
+    include: { Sumdan: true },
   });
 
   const total = await prisma.produkPembiayaan.count({

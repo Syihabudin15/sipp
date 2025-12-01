@@ -155,8 +155,11 @@ model Debitur {
   nama_penerima       String
   tgl_lahir_penerima  String
   alm_peserta         String
+  kelurahan           String?
   kecamatan           String
   kota                String
+  provinsi            String?
+  kode_pos            String?
   kantor_bayar        String
   tmt_pensiun         String
   no_skep             String
@@ -171,8 +174,43 @@ model Debitur {
   awal_flagging       String?
   akhir_flagging      String?
   mitra_flagging      String?
-  keluarga            String? @db.Text
-  dapems              Dapem[]
+  kelompok_pensiun    String?
+  pendidikan          String?
+  jenis_kelamin       String?
+  agama               String?
+  nik                 String?
+  geo_location        String?
+  d_alm_peserta       String?
+  d_kelurahan         String?
+  d_kecamatan         String?
+  d_kota              String?
+  d_provinsi          String?
+  d_kode_pos          String?
+  status_rumah        String?
+  menempati_rumah     String?
+  pekerjaan           String?
+  alm_pekerjaan       String?
+  ibu_kandung         String?
+  jenis_usaha         String?
+  status_kawin        String?
+  bank                String?
+  norek               String?
+
+  dapems    Dapem[]
+  keluargas Keluarga[]
+}
+
+model Keluarga {
+  id         String    @id @default(uuid())
+  name       String
+  nik        String?
+  tgl_lahir  DateTime?
+  hubungan   String
+  alamat     String?
+  no_telepon String?
+  pekerjaan  String?
+  Debitur    Debitur   @relation(fields: [nopen], references: [nopen])
+  nopen      String
 }
 
 model Dapem {
@@ -206,6 +244,7 @@ model Dapem {
   mutasi_from      String?
   mutasi_ke        String?
   tbo              Int
+  penggunaan       String?
 
   file_pelunasan  String?
   file_mutasi     String?

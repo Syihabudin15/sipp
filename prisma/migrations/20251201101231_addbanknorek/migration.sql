@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `debitur` ADD COLUMN `bank` VARCHAR(191) NULL,
+    ADD COLUMN `norek` VARCHAR(191) NULL;

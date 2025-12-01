@@ -4,8 +4,10 @@ import {
   Dapem,
   Debitur,
   JenisPembiayaan,
+  Keluarga,
   ProdukPembiayaan,
   Role,
+  Sumdan,
   User,
 } from "@prisma/client";
 
@@ -37,16 +39,22 @@ export interface IPageProps<T> {
 export interface IUnit extends Area {
   Cabang: Cabang[];
 }
-interface ICabang extends Cabang {
+export interface ICabang extends Cabang {
   Area: Area;
 }
 export interface IAO extends User {
   Role: Role;
   Cabang: ICabang;
 }
+export interface IDebitur extends Debitur {
+  Keluarga: Keluarga[];
+}
+export interface IProdukPembiayaan extends ProdukPembiayaan {
+  Sumdan: Sumdan;
+}
 export interface IDapem extends Dapem {
-  Debitur: Debitur;
-  ProdukPembiayaan: ProdukPembiayaan;
+  Debitur: IDebitur;
+  ProdukPembiayaan: IProdukPembiayaan;
   JenisPembiayaan: JenisPembiayaan;
   CreatedBy: User;
   AO: IAO;

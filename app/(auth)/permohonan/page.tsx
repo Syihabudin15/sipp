@@ -85,6 +85,21 @@ export default function Page() {
       },
     },
     {
+      title: "Produk Pembiayaan",
+      dataIndex: "produk",
+      key: "produk",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>
+              {record.ProdukPembiayaan.id} {record.ProdukPembiayaan.name}
+            </p>
+            <p>{record.JenisPembiayaan.name}</p>
+          </div>
+        );
+      },
+    },
+    {
       title: "AO & UP",
       dataIndex: "aoup",
       key: "aoup",
