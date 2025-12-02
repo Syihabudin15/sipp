@@ -1,6 +1,7 @@
 "use client";
 
 import { FormInput } from "@/components";
+import { IProdukPembiayaan } from "@/components/IInterfaces";
 import {
   getAngsuran,
   getFullAge,
@@ -41,8 +42,8 @@ import { useEffect, useState } from "react";
 
 export default function Page() {
   const [data, setData] = useState<IDapem>(defaultDapem);
-  const [produkss, setProdukss] = useState<ProdukPembiayaan[]>([]);
-  const [produks, setProduks] = useState<ProdukPembiayaan[]>([]);
+  const [produkss, setProdukss] = useState<IProdukPembiayaan[]>([]);
+  const [produks, setProduks] = useState<IProdukPembiayaan[]>([]);
   const [jeniss, setJeniss] = useState<JenisPembiayaan[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -114,7 +115,7 @@ export default function Page() {
       data.plafond,
       data.tenor,
       data.margin + data.margin_sumdan,
-      1000
+      data.pembulatan
     );
     const admin = data.plafond * ((data.c_adm + data.c_adm_sumdan) / 100);
     const asuransi = data.plafond * (data.c_asuransi / 100);
@@ -301,6 +302,7 @@ export default function Page() {
                       c_tatalaksana: filter.c_tatalaksana,
                       c_materai: filter.c_materai,
                       c_rekening: filter.c_rekening,
+                      pembulatan: filter.Sumdan.pembulatan,
                     });
                   },
                 }}
@@ -710,6 +712,7 @@ const defaultDapem: IDapem = {
   c_blokir: 0,
   c_mutasi: 0,
   c_pelunasan: 0,
+  pembulatan: 0,
 
   status_final: "DRAFT",
   final_at: null,
@@ -744,7 +747,7 @@ const defaultDapem: IDapem = {
   produkPembiayaanId: "",
   jenisPembiayaanId: "",
   JenisPembiayaan: {} as JenisPembiayaan,
-  ProdukPembiayaan: {} as ProdukPembiayaan,
+  ProdukPembiayaan: {} as IProdukPembiayaan,
   CreatedBy: {} as User,
   AO: {} as User,
   createdById: "",

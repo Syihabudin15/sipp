@@ -1,8 +1,11 @@
 "use client";
 
-import { Input, Select } from "antd";
+import { CloudUploadOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Button, Input, Select, Upload, UploadProps } from "antd";
 import moment from "moment";
-const { PV } = require("@formulajs/formulajs");
+import { useState } from "react";
+// const { PV } = require("@formulajs/formulajs");
+import { PV } from "@formulajs/formulajs";
 
 export interface IFormInput {
   label: string;
@@ -11,12 +14,20 @@ export interface IFormInput {
   prefix?: any;
   suffix?: any;
   mode?: "vertical" | "horizontal";
-  type?: "text" | "number" | "select" | "date" | "textarea" | "password";
+  type?:
+    | "text"
+    | "number"
+    | "select"
+    | "date"
+    | "textarea"
+    | "password"
+    | "upload";
   options?: Array<{ label: string; value: any }>;
   disabled?: boolean;
   required?: boolean;
   labelIcon?: any;
   class?: any;
+  accept?: string;
 }
 
 export const FormInput = ({ data }: { data: IFormInput }) => {
@@ -94,6 +105,13 @@ export const FormInput = ({ data }: { data: IFormInput }) => {
           required={data.required}
         />
       )}
+      {data.type === "upload" && (
+        <UploadComponents
+          accept={data.accept || ""}
+          file={data.value}
+          setFile={(e: string) => data.onChange && data.onChange(e)}
+        />
+      )}
     </div>
   );
 };
@@ -128,7 +146,7 @@ export function getMaxTenor(
   usia_tahun: number,
   usia_bulan: number
 ) {
-  let tmp = max_usia - usia_tahun;
+  const tmp = max_usia - usia_tahun;
   const max_tenor = usia_tahun <= max_usia ? tmp * 12 - (usia_bulan + 1) : 0;
   return max_tenor;
 }
@@ -138,7 +156,8 @@ export function getMaxPlafond(
   tenor: number,
   max_angsuran: number
 ) {
-  const maxPlafond = PV(mg_bunga / 100 / 12, tenor, max_angsuran, 0, 0) * -1;
+  const maxPlafond =
+    Number(PV(mg_bunga / 100 / 12, tenor, max_angsuran, 0, 0)) * -1;
   return maxPlafond;
 }
 
@@ -169,4 +188,95 @@ export const fileToBase64 = (file: File): Promise<string> => {
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = (error) => reject(error);
   });
+};
+
+const UploadComponents = ({
+  file,
+  setFile,
+  accept,
+}: {
+  file: string | undefined;
+  setFile: Function;
+  accept: string;
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+
+  const handleUpload = async (file: any) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`/api/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const resData = await res.json();
+      if (resData.secure_url) {
+        setFile(resData.secure_url);
+      } else {
+        setError(resData.error.message);
+      }
+    } catch (err) {
+      console.log(err);
+      setError("Internal Server Error");
+    }
+  };
+
+  const handleDeleteFiles = async () => {
+    setLoading(true);
+    await fetch("/api/upload", {
+      method: "DELETE",
+      body: JSON.stringify({ publicId: file }),
+    })
+      .then(() => {
+        setFile(undefined);
+      })
+      .catch((err) => {
+        console.log(err);
+        setError("Gagal hapus file!.");
+      });
+    setLoading(false);
+  };
+
+  const props: UploadProps = {
+    beforeUpload: async (file) => {
+      setLoading(true);
+      await handleUpload(file);
+      setLoading(false);
+      return false; // prevent automatic upload
+    },
+    showUploadList: false, // sembunyikan default list
+    accept: accept,
+  };
+
+  return (
+    <div>
+      {file ? (
+        <div className="flex gap-2 items-center">
+          <p>{file.substring(0, 50) + "..."}</p>
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            onClick={() => handleDeleteFiles()}
+            loading={loading}
+          ></Button>
+        </div>
+      ) : (
+        <div>
+          <Upload {...props}>
+            <Button
+              size="small"
+              icon={<CloudUploadOutlined />}
+              loading={loading}
+            >
+              Upload Berkas
+            </Button>
+          </Upload>
+          {error && <p className="italic text-red-500">{error}</p>}
+        </div>
+      )}
+    </div>
+  );
 };

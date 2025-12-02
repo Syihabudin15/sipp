@@ -205,3 +205,27 @@ export async function generateProdukId(sumdanId: string) {
 
   return newId;
 }
+
+export async function generateDapemId() {
+  const prefix = `SIPP-`;
+  const padLength = 5; // jumlah digit angka
+
+  // Ambil record terakhir berdasarkan ID (urut desc)
+  const lastRecord = await prisma.dapem.findFirst({
+    orderBy: { id: "desc" },
+    select: { id: true },
+  });
+
+  let newNumber = 1;
+
+  if (lastRecord && lastRecord.id) {
+    // Ekstrak angka dari ID terakhir, contoh "PNM-000123" → 123
+    const lastNumber = parseInt(lastRecord.id.replace(prefix, "")) || 0;
+    newNumber = lastNumber + 1;
+  }
+
+  // Format ulang dengan leading zero
+  const newId = `${prefix}${String(newNumber).padStart(padLength, "0")}`;
+
+  return newId;
+}

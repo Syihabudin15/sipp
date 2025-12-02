@@ -395,9 +395,20 @@ function UpsertSumdan({
           />
           <FormInput
             data={{
-              label: "Logo BPR/Bank",
+              label: "Pembulatan",
               mode: "horizontal",
               type: "text",
+              value: IDRFormat(data.pembulatan || 0),
+              onChange: (e: any) =>
+                setData({ ...data, pembulatan: IDRToNumber(e || "0") }),
+            }}
+          />
+          <FormInput
+            data={{
+              label: "Logo BPR/Bank",
+              mode: "horizontal",
+              type: "upload",
+              accept: "image/png,image/jpg,image/jpeg",
               value: data.logo,
               onChange: (e: string) => setData({ ...data, logo: e }),
             }}
@@ -497,7 +508,8 @@ const defaultSumdan: ISumdan = {
   sk_akad: "",
   description: null,
   logo: null,
-  tbo: 0,
+  tbo: 3,
+  pembulatan: 1000,
   ProdukPembiayaan: [],
 
   status: true,

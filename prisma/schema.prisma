@@ -99,6 +99,7 @@ model Sumdan {
   ttd_akad    String?
   ttd_jabatan String?
   tbo         Int     @default(3)
+  pembulatan  Int     @default(1000)
 
   status           Boolean            @default(true)
   created_at       DateTime           @default(now())
@@ -245,6 +246,7 @@ model Dapem {
   mutasi_ke        String?
   tbo              Int
   penggunaan       String?
+  pembulatan       Int
 
   file_pelunasan  String?
   file_mutasi     String?

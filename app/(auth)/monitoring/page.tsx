@@ -1,25 +1,14 @@
 "use client";
 
 import { IActionTable, IDapem, IPageProps } from "@/components/IInterfaces";
-import { IDRFormat } from "@/components/Utils";
+import { getAngsuran, IDRFormat } from "@/components/Utils";
 import {
+  ArrowRightOutlined,
   DeleteOutlined,
   DropboxOutlined,
   EditOutlined,
-  PlusCircleFilled,
-  SendOutlined,
 } from "@ant-design/icons";
-import {
-  App,
-  Button,
-  Card,
-  Input,
-  Modal,
-  Table,
-  TableProps,
-  Tag,
-  Tooltip,
-} from "antd";
+import { App, Button, Card, Input, Modal, Table, TableProps, Tag } from "antd";
 import moment from "moment";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -32,20 +21,19 @@ export default function Page() {
     data: [],
     search: "",
   });
+  const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<IActionTable<IDapem>>({
     openUpsert: false,
     openDelete: false,
     selected: undefined,
   });
   const { modal } = App.useApp();
-  const [loading, setLoading] = useState(false);
 
   const getData = async () => {
     setLoading(true);
     const params = new URLSearchParams();
     params.append("page", pageProps.page.toString());
     params.append("limit", pageProps.limit.toString());
-    params.append("status_final", "DRAFT");
     if (pageProps.search) {
       params.append("search", pageProps.search);
     }
@@ -97,6 +85,18 @@ export default function Page() {
           <div>
             <p>Plafond : {IDRFormat(record.plafond)}</p>
             <p>Tenor : {record.tenor} Bulan</p>
+            <p>
+              Angsuran :{" "}
+              {IDRFormat(
+                getAngsuran(
+                  record.plafond,
+                  record.tenor,
+                  record.margin + record.margin_sumdan,
+                  record.pembulatan
+                ).angsuran
+              )}{" "}
+              Bulan
+            </p>
           </div>
         );
       },
@@ -112,6 +112,25 @@ export default function Page() {
               {record.ProdukPembiayaan.id} {record.ProdukPembiayaan.name}
             </p>
             <p>{record.JenisPembiayaan.name}</p>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Mutasi & Pelunasan",
+      dataIndex: "produk",
+      key: "produk",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>
+              Pelunasan Ke {record.pelunasan_ke} (
+              {moment(record.pelunasan_date).format("DD/MM/YYYY")})
+            </p>
+            <p>
+              Mutasi {record.mutasi_from} <ArrowRightOutlined />{" "}
+              {record.mutasi_ke}
+            </p>
           </div>
         );
       },
@@ -162,7 +181,7 @@ export default function Page() {
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Link href={"/permohonan/update/" + record.id}>
+          <Link href={`/permohonan/update/${record.id}`}>
             <Button
               icon={<EditOutlined />}
               size="small"
@@ -178,16 +197,6 @@ export default function Page() {
               setSelected({ ...selected, openDelete: true, selected: record })
             }
           ></Button>
-          <Tooltip title={"Ajukan permohonan kredit ini?"}>
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              size="small"
-              onClick={() =>
-                setSelected({ ...selected, openUpsert: true, selected: record })
-              }
-            ></Button>
-          </Tooltip>
         </div>
       ),
     },
@@ -217,36 +226,6 @@ export default function Page() {
     setLoading(false);
   };
 
-  const handleSend = async () => {
-    setLoading(true);
-    if (!selected.selected) {
-      modal.error({ content: "Maaf tidak ada data yg dipilih!" });
-    }
-    await fetch("/api/dapem", {
-      method: "PUT",
-      body: JSON.stringify({ ...selected.selected, status_final: "ANTRI" }),
-    })
-      .then((res) => res.json())
-      .then(async (res) => {
-        const { msg, status } = res;
-        if (status !== 201) {
-          modal.error({ content: msg });
-        } else {
-          modal.success({
-            content: `Data permohonan kredit ${selected.selected?.Debitur.nama_penerima} (${selected.selected?.nopen}) berhasil diajukan`,
-          });
-          await getData();
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        modal.error({
-          content: `Internal Server Error!!. Pengajuan data permohonan kredit ${selected.selected?.Debitur.nama_penerima} (${selected.selected?.nopen}) gagal`,
-        });
-      });
-    setLoading(false);
-  };
-
   return (
     <Card
       title={
@@ -257,11 +236,6 @@ export default function Page() {
       styles={{ body: { padding: 5 } }}
     >
       <div className="flex justify-between my-1">
-        <Link href={"/permohonan/create"}>
-          <Button size="small" type="primary" icon={<PlusCircleFilled />}>
-            Add New
-          </Button>
-        </Link>
         <Input.Search
           size="small"
           style={{ width: 170 }}
@@ -294,7 +268,6 @@ export default function Page() {
           pageSizeOptions: [50, 100, 500, 1000],
         }}
       />
-
       <Modal
         open={selected.openDelete}
         onCancel={() =>
@@ -309,27 +282,8 @@ export default function Page() {
           onClick: () => handleDelete(),
         }}
       >
-        <p className="text-red-500">
-          Konfirmasi hapus data permohonan kredit ini *
-          {selected.selected ? selected.selected.Debitur.nama_penerima : ""}* ?
-        </p>
-      </Modal>
-      <Modal
-        open={selected.openUpsert}
-        onCancel={() =>
-          setSelected({ ...selected, openUpsert: false, selected: undefined })
-        }
-        title={`AJUKAN PERMOHONAN KREDIT ${
-          selected.selected ? selected.selected.Debitur.nama_penerima : ""
-        }`}
-        loading={loading}
-        okButtonProps={{
-          danger: true,
-          onClick: () => handleSend(),
-        }}
-      >
         <p>
-          Konfirmasi pengajuan Permohonan kredit ini *
+          Konfirmasi hapus data pembiayaan ini *
           {selected.selected ? selected.selected.Debitur.nama_penerima : ""}* ?
         </p>
       </Modal>
