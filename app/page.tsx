@@ -1,13 +1,37 @@
 "use client";
 import { Form, Input, Button, Layout, Row, Col, Card } from "antd";
 import { UserOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
+import { useState } from "react";
+import Image from "next/image";
 const { Content } = Layout;
 
 export default function Page() {
-  const onFinish = (values: any) => {
-    console.log("Nilai yang diterima dari formulir: ", values);
-    // Di sini Anda akan menambahkan logika otentikasi (misalnya, memanggil API)
-    alert(`Berhasil Login! Username: ${values.username}`);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string>();
+
+  const onFinish = async (e: any) => {
+    if (!e || !e.username || !e.password) {
+      return setErr("Mohon lengkapi username & password");
+    }
+    setLoading(true);
+    await fetch("/api/auth", {
+      method: "POST",
+      body: JSON.stringify(e),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 200) {
+          window && window.location.replace("/dashboard");
+        } else {
+          setErr(res.msg);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setErr("Internal Server Error");
+      });
+    setLoading(false);
   };
 
   return (
@@ -26,13 +50,15 @@ export default function Page() {
                     alignItems: "center",
                   }}
                 >
-                  <img
+                  <Image
                     src="/globe.svg"
                     alt="Logo"
-                    style={{ height: "40px", marginBottom: "8px" }}
+                    width={40}
+                    height={40}
+                    style={{ marginBottom: "8px" }}
                   />
                   <h2 className="font-bold text-xl mb-4">
-                    {process.env.NEXT_PUBLIC_APP_FULLNAME || "GEMA"}
+                    {process.env.NEXT_PUBLIC_APP_FULLNAME || "SIPP"}
                   </h2>
                 </div>
               }
@@ -76,6 +102,11 @@ export default function Page() {
                     size="large"
                   />
                 </Form.Item>
+                {err && (
+                  <div className="italic text-red-500">
+                    <p>{err}</p>
+                  </div>
+                )}
                 {/* Tombol Submit */}
                 <Form.Item>
                   <Button

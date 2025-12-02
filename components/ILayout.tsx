@@ -11,6 +11,9 @@ import {
   BookOutlined,
   ReadOutlined,
   CalculatorOutlined,
+  AuditOutlined,
+  MoneyCollectOutlined,
+  TransactionOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 
@@ -33,6 +36,28 @@ export const menuItems = [
     key: "/permohonan",
     icon: <BookOutlined />,
     label: "Permohonan Pembiayaan",
+  },
+  {
+    key: "/proses",
+    icon: <AuditOutlined />,
+    label: "Proses Pembiayaan",
+    children: [],
+  },
+  {
+    key: "/pencairan",
+    icon: <TransactionOutlined />,
+    label: "Data Pencairan",
+    children: [],
+  },
+  {
+    key: "/pelunasan",
+    icon: <MoneyCollectOutlined />,
+    label: "Pelunasan Debitur",
+  },
+  {
+    key: "/debitur",
+    icon: <UserOutlined />,
+    label: "Data Debitur",
   },
   {
     key: "/configs",
@@ -92,7 +117,7 @@ export const DashboardLayout = ({
           }}
         >
           <Title level={4} style={{ color: "white", margin: 0 }}>
-            {process.env.NEXT_PUBLIC_APP_SHORTNAME || "GEMA SIPP"}
+            {process.env.NEXT_PUBLIC_APP_SHORTNAME || "SIPP"}
           </Title>
         </div>
         <Menu
@@ -110,7 +135,7 @@ export const DashboardLayout = ({
           style={{ padding: 0, background: colorBgContainer, height: 60 }}
         >
           <Title level={3} style={{ margin: "0 20px", lineHeight: "60px" }}>
-            {process.env.NEXT_PUBLIC_APP_FULLNAME || "GEMA SIPP"}
+            {process.env.NEXT_PUBLIC_APP_FULLNAME || "SIPP"}
           </Title>
         </Header>
 
