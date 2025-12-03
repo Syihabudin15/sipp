@@ -6,6 +6,7 @@ import { IDRFormat, IDRToNumber } from "@/components/Utils";
 import {
   BankOutlined,
   DeleteOutlined,
+  DollarCircleOutlined,
   EditOutlined,
   EnvironmentOutlined,
   FolderOutlined,
@@ -103,6 +104,10 @@ export default function Page() {
               </p>
               <p>
                 <FolderOutlined /> TBO {record.tbo} Bulan
+              </p>
+              <p>
+                <DollarCircleOutlined /> Pembulatan{" "}
+                {IDRFormat(record.pembulatan)}
               </p>
             </div>
           </div>

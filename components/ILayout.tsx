@@ -1,5 +1,14 @@
 "use client";
-import { Layout, Menu, theme, Typography } from "antd";
+import {
+  Badge,
+  Button,
+  Layout,
+  Menu,
+  Modal,
+  theme,
+  Tooltip,
+  Typography,
+} from "antd";
 import {
   DashboardOutlined,
   KeyOutlined,
@@ -14,8 +23,15 @@ import {
   AuditOutlined,
   MoneyCollectOutlined,
   TransactionOutlined,
+  LogoutOutlined,
+  BellOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useUser } from "./contexts/UserContext";
+import { useEffect, useState } from "react";
+import { INotif, IPermission } from "./IInterfaces";
+import { filterMenuItemsByPermission, NotifItem } from "./Utils";
+import { MenuItemType } from "antd/es/menu/interface";
 
 const { Header, Content, Sider } = Layout;
 const { Title } = Typography;
@@ -102,6 +118,44 @@ export const DashboardLayout = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const router = useRouter();
+  const user = useUser();
+  const [notif, setNotif] = useState<INotif>({
+    verif: 0,
+    slik: 0,
+    approv: 0,
+    akad: 0,
+    si: 0,
+    dropping: 0,
+  });
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const getNotif = async () => {
+    await fetch("/api/notif")
+      .then((res) => res.json())
+      .then((res) => {
+        setNotif(res);
+      });
+  };
+
+  useEffect(() => {
+    (async () => {
+      await getNotif();
+      setInterval(async () => {
+        await getNotif();
+      }, 10000);
+    })();
+  }, []);
+
+  const handleLogout = async () => {
+    setLoading(true);
+    await fetch("/api/auth", { method: "DELETE" })
+      .then((res) => res.json())
+      .then(() => {
+        window && window.location.replace("/");
+      });
+    setLoading(false);
+  };
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -120,32 +174,108 @@ export const DashboardLayout = ({
             {process.env.NEXT_PUBLIC_APP_SHORTNAME || "SIPP"}
           </Title>
         </div>
-        <Menu
-          theme="dark"
-          defaultSelectedKeys={["1"]}
-          mode="inline"
-          items={menuItems}
-          onClick={(e) => router.push(e.key)}
-        />
+        {user && (
+          <Menu
+            theme="dark"
+            defaultSelectedKeys={["1"]}
+            mode="inline"
+            items={
+              filterMenuItemsByPermission(
+                menuItems,
+                (JSON.parse(user.Role.permission) as IPermission[]).map(
+                  (p) => p.path
+                )
+              ) as MenuItemType[]
+            }
+            onClick={(e) => router.push(e.key)}
+          />
+        )}
       </Sider>
 
       <Layout>
         {/* Header */}
         <Header
-          style={{ padding: 0, background: colorBgContainer, height: 60 }}
+          style={{
+            padding: 0,
+            background: colorBgContainer,
+            height: 60,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
           <Title level={3} style={{ margin: "0 20px", lineHeight: "60px" }}>
-            {process.env.NEXT_PUBLIC_APP_FULLNAME || "SIPP"}
+            {window && window.innerWidth > 600
+              ? process.env.NEXT_PUBLIC_APP_FULLNAME || "SIPP"
+              : process.env.NEXT_PUBLIC_APP_SHORTNAME || "SIPP"}
           </Title>
+          <div className="pr-4 flex gap-4 items-center">
+            {window && window.innerWidth > 600 && (
+              <div className="flex items-center gap-2">
+                <NotifItem
+                  count={notif.verif}
+                  name="VERIF"
+                  link="/proses/verif"
+                />
+                <NotifItem count={notif.slik} name="SLIK" link="/proses/slik" />
+                <NotifItem
+                  count={notif.approv}
+                  name="APPROV"
+                  link="/proses/approv"
+                />
+                <NotifItem count={notif.akad} name="AKAD" link="/berkas" />
+                <NotifItem count={notif.si} name="SI" link="/pencairan/cetak" />
+                <NotifItem
+                  count={notif.dropping}
+                  name="DROPPING"
+                  link="/pencairan/list"
+                />
+              </div>
+            )}
+            {window && window.innerWidth < 600 && (
+              <Tooltip
+                title={
+                  <div>
+                    <p>VERIFIKASI : {notif.verif}</p>
+                    <p>SLIK : {notif.slik}</p>
+                    <p>APPROVAL : {notif.approv}</p>
+                    <p>AKAD : {notif.akad}</p>
+                    <p>SI : {notif.si}</p>
+                    <p>DROPPING : {notif.dropping}</p>
+                  </div>
+                }
+              >
+                <Badge
+                  count={
+                    notif.verif +
+                    notif.slik +
+                    notif.approv +
+                    notif.akad +
+                    notif.si +
+                    notif.dropping
+                  }
+                  showZero
+                >
+                  <Button icon={<BellOutlined />}></Button>
+                </Badge>
+              </Tooltip>
+            )}
+            <p>{user?.fullname}</p>
+            <Button
+              icon={<LogoutOutlined />}
+              danger
+              onClick={() => setOpen(true)}
+            ></Button>
+          </div>
         </Header>
 
         {/* Konten Utama */}
         <Content style={{ margin: "10px 14px" }}>
           <div
             style={{
-              padding: 10,
+              // padding: 10,
               minHeight: 360,
-              background: colorBgContainer,
+              // background: colorBgContainer,
               borderRadius: borderRadiusLG,
             }}
           >
@@ -153,6 +283,15 @@ export const DashboardLayout = ({
           </div>
         </Content>
       </Layout>
+      <Modal
+        open={open}
+        onCancel={() => setOpen(false)}
+        title={"Konfirmasi Logout?"}
+        onOk={() => handleLogout()}
+        loading={loading}
+      >
+        <p>Lanjutkan untuk keluar?</p>
+      </Modal>
     </Layout>
   );
 };

@@ -115,6 +115,7 @@ export default function Page() {
                     style={{ width: "100%", marginTop: 10 }}
                     size="large"
                     icon={<LoginOutlined />}
+                    loading={loading}
                   >
                     Log in
                   </Button>

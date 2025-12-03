@@ -1,12 +1,7 @@
 "use client";
 
 import { FormInput } from "@/components";
-import {
-  IAO,
-  IDapem,
-  IDebitur,
-  IProdukPembiayaan,
-} from "@/components/IInterfaces";
+import { IAO, IDapem, IProdukPembiayaan } from "@/components/IInterfaces";
 import {
   getAngsuran,
   getFullAge,
@@ -48,12 +43,17 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
-  const [statusDomisili, setStatusDomisili] = useState(false);
+  const [statusDomisili, setStatusDomisili] = useState(
+    defaultData &&
+      defaultData.Debitur.alm_peserta === defaultData.Debitur.d_alm_peserta
+      ? true
+      : false
+  );
   const [users, setUsers] = useState<IAO[]>([]);
   const [produkss, setProdukss] = useState<IProdukPembiayaan[]>([]);
   const [produks, setProduks] = useState<IProdukPembiayaan[]>([]);
   const [jeniss, setJeniss] = useState<JenisPembiayaan[]>([]);
-  const [data, setData] = useState<IDapemCreate>(defaultDapem);
+  const [data, setData] = useState<IDapemCreate>(defaultData || defaultDapem);
   const [loading, setLoading] = useState(false);
   const { modal, message } = App.useApp();
 
@@ -125,7 +125,29 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
       });
     setLoading(false);
   };
-
+  const reset = () => {
+    setData({
+      ...data,
+      produkPembiayaanId: "",
+      jenisPembiayaanId: "",
+      ProdukPembiayaan: {} as IProdukPembiayaan,
+      JenisPembiayaan: {} as JenisPembiayaan,
+      max_tenor: 0,
+      max_plafond: 0,
+      c_asuransi: 0,
+      c_adm: 0,
+      c_adm_sumdan: 0,
+      c_tatalaksana: 0,
+      c_materai: 0,
+      c_mutasi: 0,
+      c_pelunasan: 0,
+      c_rekening: 0,
+      c_blokir: 0,
+      pembulatan: 0,
+      tbo: 0,
+      total_biaya: 0,
+    });
+  };
   useEffect(() => {
     const { year, month, day } = getFullAge(
       moment(data.Debitur.tgl_lahir_penerima, "DD-MM-YYYY").format(
@@ -133,8 +155,17 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
       ),
       moment(data.created_at).format("YYYY-MM-DD")
     );
-    setProduks(produkss.filter((p) => year >= p.min_usia && year < p.max_usia));
-
+    const filterProd = produkss.filter(
+      (p) => year >= p.min_usia && year < p.max_usia
+    );
+    setProduks(filterProd);
+    if (
+      !defaultData &&
+      data.produkPembiayaanId &&
+      !filterProd.find((p) => p.id === data.produkPembiayaanId)
+    ) {
+      reset();
+    }
     const maxTenor = getMaxTenor(data.ProdukPembiayaan.usia_lunas, year, month);
     const maxPlafond = getMaxPlafond(
       data.margin + data.margin_sumdan,
@@ -145,7 +176,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
       data.plafond,
       data.tenor,
       data.margin + data.margin_sumdan,
-      data.pembulatan
+      data.pembulatan || 100
     );
     const admin = data.plafond * ((data.c_adm + data.c_adm_sumdan) / 100);
     const asuransi = data.plafond * (data.c_asuransi / 100);
@@ -170,8 +201,14 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
       usia_tahun_lunas: yearLunas,
       usia_bulan_lunas: monthLunas,
       usia_hari_lunas: dayLunas,
-      max_tenor: maxTenor,
-      max_plafond: maxPlafond,
+      max_tenor:
+        maxTenor > data.ProdukPembiayaan.max_tenor
+          ? data.ProdukPembiayaan.max_tenor
+          : maxTenor,
+      max_plafond:
+        maxPlafond > data.ProdukPembiayaan.max_plafond
+          ? data.ProdukPembiayaan.max_plafond
+          : maxPlafond,
       angsuran: angsuran.angsuran,
       total_biaya:
         admin +
@@ -192,17 +229,8 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
     data.c_pelunasan,
     data.tenor,
     data.plafond,
+    defaultData,
   ]);
-
-  // Handle Update
-  useEffect(() => {
-    if (defaultData) {
-      setData(defaultData);
-    } else {
-      setData(defaultDapem);
-    }
-  }, [defaultData]);
-  // Handle Update
 
   const handleSubmit = async () => {
     const {
@@ -235,9 +263,17 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
               defaultData ? "Edit" : "Input"
             } data Permohonan Kredit berhasil.`,
           });
-          // setTimeout(() => {
-          //   window && window.location.replace("/permohonan");
-          // }, 1000);
+          setTimeout(() => {
+            if(defaultData){
+              if(defaultData.status_final === "DRAFT"){
+                window && window.location.replace("/permohonan");
+              }else{
+                window && window.location.replace("/monitoring");
+              }
+            }else{
+              window && window.location.replace("/permohonan");
+            }
+          }, 1000);
         }
       })
       .catch((err) => {
@@ -840,210 +876,197 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
               }}
             />
           </Col>
-          {data.Debitur.Keluarga.map((k) => (
-            <Col xs={24} lg={24} key={k.id}>
-              <div className="flex gap-2 flex-wrap">
-                <FormInput
-                  data={{
-                    label: "Hubungan",
-                    class: "flex-1",
-                    required: true,
-                    type: "text",
-                    value: k.hubungan,
-                    onChange: (e: string) => {
-                      const newData = { ...k, hubungan: e };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <FormInput
-                  data={{
-                    label: "Nama Keluarga",
-                    class: "flex-1",
-                    required: true,
-                    type: "text",
-                    value: k.name,
-                    onChange: (e: string) => {
-                      const newData = { ...k, name: e };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <FormInput
-                  data={{
-                    label: "Nomor NIK",
-                    class: "flex-1",
-                    type: "text",
-                    value: k.nik,
-                    onChange: (e: string) => {
-                      const newData = { ...k, nik: e };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <FormInput
-                  data={{
-                    label: "No Telepon",
-                    class: "flex-1",
-                    type: "text",
-                    value: k.no_telepon,
-                    onChange: (e: string) => {
-                      const newData = { ...k, no_telepon: e };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <FormInput
-                  data={{
-                    label: "Pekerjaan",
-                    class: "flex-1",
-                    type: "text",
-                    value: k.pekerjaan,
-                    onChange: (e: string) => {
-                      const newData = { ...k, pekerjaan: e };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <FormInput
-                  data={{
-                    label: "Tanggal Lahir",
-                    class: "flex-1",
-                    type: "date",
-                    value: k.tgl_lahir,
-                    onChange: (e: string) => {
-                      const newData = {
-                        ...k,
-                        tgl_lahir: !isNaN(new Date(e).getTime())
-                          ? moment(e).toDate()
-                          : null,
-                      };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <FormInput
-                  data={{
-                    label: "Nomor NIK",
-                    class: "flex-1",
-                    required: true,
-                    value: k.nik,
-                    onChange: (e: string) => {
-                      const newData = { ...k, nik: e };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <FormInput
-                  data={{
-                    label: "Alamat",
-                    class: "flex-1",
-                    type: "textarea",
-                    value: k.alamat,
-                    onChange: (e: string) => {
-                      const newData = { ...k, alamat: e };
-                      const filter = data.Debitur.Keluarga.filter(
-                        (dk) => dk.id !== k.id
-                      );
-                      filter.push(newData);
-                      setData({
-                        ...data,
-                        Debitur: {
-                          ...data.Debitur,
-                          Keluarga: filter,
-                        },
-                      });
-                    },
-                  }}
-                />
-                <Button
-                  icon={<MinusCircleOutlined />}
-                  danger
-                  onClick={() =>
-                    setData({
-                      ...data,
-                      Debitur: {
-                        ...data.Debitur,
-                        Keluarga: data.Debitur.Keluarga.filter(
+          {data.Debitur &&
+            data.Debitur.Keluarga &&
+            data.Debitur.Keluarga.map((k) => (
+              <Col xs={24} lg={24} key={k.id}>
+                <div className="flex gap-2 flex-wrap">
+                  <FormInput
+                    data={{
+                      label: "Hubungan",
+                      class: "flex-1",
+                      required: true,
+                      mode: "vertical",
+                      type: "text",
+                      value: k.hubungan,
+                      onChange: (e: string) => {
+                        const newData = { ...k, hubungan: e };
+                        const filter = data.Debitur.Keluarga.filter(
                           (dk) => dk.id !== k.id
-                        ),
+                        );
+                        filter.push(newData);
+                        setData({
+                          ...data,
+                          Debitur: {
+                            ...data.Debitur,
+                            Keluarga: filter,
+                          },
+                        });
                       },
-                    })
-                  }
-                ></Button>
-              </div>
-            </Col>
-          ))}
+                    }}
+                  />
+                  <FormInput
+                    data={{
+                      label: "Nama Keluarga",
+                      class: "flex-1",
+                      required: true,
+                      type: "text",
+                      mode: "vertical",
+                      value: k.name,
+                      onChange: (e: string) => {
+                        const newData = { ...k, name: e };
+                        const filter = data.Debitur.Keluarga.filter(
+                          (dk) => dk.id !== k.id
+                        );
+                        filter.push(newData);
+                        setData({
+                          ...data,
+                          Debitur: {
+                            ...data.Debitur,
+                            Keluarga: filter,
+                          },
+                        });
+                      },
+                    }}
+                  />
+                  <FormInput
+                    data={{
+                      label: "Nomor NIK",
+                      class: "flex-1",
+                      type: "text",
+                      mode: "vertical",
+                      value: k.nik,
+                      onChange: (e: string) => {
+                        const newData = { ...k, nik: e };
+                        const filter = data.Debitur.Keluarga.filter(
+                          (dk) => dk.id !== k.id
+                        );
+                        filter.push(newData);
+                        setData({
+                          ...data,
+                          Debitur: {
+                            ...data.Debitur,
+                            Keluarga: filter,
+                          },
+                        });
+                      },
+                    }}
+                  />
+                  <FormInput
+                    data={{
+                      label: "No Telepon",
+                      class: "flex-1",
+                      type: "text",
+                      mode: "vertical",
+                      value: k.no_telepon,
+                      onChange: (e: string) => {
+                        const newData = { ...k, no_telepon: e };
+                        const filter = data.Debitur.Keluarga.filter(
+                          (dk) => dk.id !== k.id
+                        );
+                        filter.push(newData);
+                        setData({
+                          ...data,
+                          Debitur: {
+                            ...data.Debitur,
+                            Keluarga: filter,
+                          },
+                        });
+                      },
+                    }}
+                  />
+                  <FormInput
+                    data={{
+                      label: "Pekerjaan",
+                      class: "flex-1",
+                      type: "text",
+                      mode: "vertical",
+                      value: k.pekerjaan,
+                      onChange: (e: string) => {
+                        const newData = { ...k, pekerjaan: e };
+                        const filter = data.Debitur.Keluarga.filter(
+                          (dk) => dk.id !== k.id
+                        );
+                        filter.push(newData);
+                        setData({
+                          ...data,
+                          Debitur: {
+                            ...data.Debitur,
+                            Keluarga: filter,
+                          },
+                        });
+                      },
+                    }}
+                  />
+                  <FormInput
+                    data={{
+                      label: "Tanggal Lahir",
+                      class: "flex-1",
+                      type: "date",
+                      mode: "vertical",
+                      value: moment(k.tgl_lahir).format("YYYY-MM-DD"),
+                      onChange: (e: string) => {
+                        const newData = {
+                          ...k,
+                          tgl_lahir: !isNaN(new Date(e).getTime())
+                            ? moment(e).toDate()
+                            : null,
+                        };
+                        const filter = data.Debitur.Keluarga.filter(
+                          (dk) => dk.id !== k.id
+                        );
+                        filter.push(newData);
+                        setData({
+                          ...data,
+                          Debitur: {
+                            ...data.Debitur,
+                            Keluarga: filter,
+                          },
+                        });
+                      },
+                    }}
+                  />
+                  <FormInput
+                    data={{
+                      label: "Alamat",
+                      class: "flex-1",
+                      type: "textarea",
+                      mode: "vertical",
+                      value: k.alamat,
+                      onChange: (e: string) => {
+                        const newData = { ...k, alamat: e };
+                        const filter = data.Debitur.Keluarga.filter(
+                          (dk) => dk.id !== k.id
+                        );
+                        filter.push(newData);
+                        setData({
+                          ...data,
+                          Debitur: {
+                            ...data.Debitur,
+                            Keluarga: filter,
+                          },
+                        });
+                      },
+                    }}
+                  />
+                  <Button
+                    icon={<MinusCircleOutlined />}
+                    danger
+                    onClick={() =>
+                      setData({
+                        ...data,
+                        Debitur: {
+                          ...data.Debitur,
+                          Keluarga: data.Debitur.Keluarga.filter(
+                            (dk) => dk.id !== k.id
+                          ),
+                        },
+                      })
+                    }
+                  ></Button>
+                </div>
+              </Col>
+            ))}
           <Button
             icon={<PlusCircleOutlined />}
             onClick={() =>
@@ -1053,7 +1076,11 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                   ...data.Debitur,
                   Keluarga: [
                     ...data.Debitur.Keluarga,
-                    { ...defaultKeluarga, nopen: data.nopen },
+                    {
+                      ...defaultKeluarga,
+                      nopen: data.nopen,
+                      id: Date.now().toString(),
+                    },
                   ],
                 },
               })
@@ -1116,11 +1143,11 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                   { label: "ASABRI", value: "ASABRI" },
                   { label: "LAINNYA", value: "LAINNYA" },
                 ],
-                value: data.Debitur.jenis_skep,
+                value: data.Debitur.kelompok_pensiun,
                 onChange: (e: string) =>
                   setData({
                     ...data,
-                    Debitur: { ...data.Debitur, jenis_skep: e },
+                    Debitur: { ...data.Debitur, kelompok_pensiun: e },
                   }),
               }}
             />
@@ -1303,7 +1330,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                       c_materai: filter.c_materai,
                       c_rekening: filter.c_rekening,
                       tbo: filter.Sumdan.tbo,
-                      pembulatan: data.pembulatan,
+                      pembulatan: filter.Sumdan.pembulatan,
                     });
                   },
                 }}
@@ -1685,7 +1712,15 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
           />
         </div>
         <div className="flex justify-end gap-4 items-center">
-          <Link href={"/permohonan"}>
+          <Link
+            href={
+              defaultData
+                ? defaultData.status_final === "DRAFT"
+                  ? "/permohonan"
+                  : "/monitoring"
+                : "/permohonan"
+            }
+          >
             <Button danger>Batal</Button>
           </Link>
           <Button
@@ -1714,6 +1749,18 @@ export interface IDapemCreate extends IDapem {
   angsuran: number;
   total_biaya: number;
 }
+
+const defaultKeluarga: Keluarga = {
+  id: Date.now().toString(),
+  name: "",
+  no_telepon: null,
+  nik: null,
+  alamat: null,
+  pekerjaan: null,
+  tgl_lahir: null,
+  hubungan: "",
+  nopen: "",
+};
 
 const defaultDapem: IDapemCreate = {
   id: "",
@@ -1752,6 +1799,9 @@ const defaultDapem: IDapemCreate = {
   approv_date: null,
   tbo: 0,
   penggunaan: null,
+  verif_desc: null,
+  slik_desc: null,
+  approv_desc: null,
 
   mutasi_status: null,
   mutasi_from: null,
@@ -1778,23 +1828,57 @@ const defaultDapem: IDapemCreate = {
   ProdukPembiayaan: {} as IProdukPembiayaan,
   CreatedBy: {} as User,
   AO: {} as IAO,
-  Debitur: {} as IDebitur,
+  Debitur: {
+    nopen: "",
+    nama_penerima: "",
+    nama_skep: "",
+    tgl_lahir_penerima: "",
+    tgl_skep: "",
+    gaji_pensiun: 0,
+    alm_pekerjaan: "",
+    alm_peserta: "",
+    d_alm_peserta: "",
+    kelurahan: "",
+    kecamatan: "",
+    kota: "",
+    provinsi: "",
+    kode_pos: "",
+    d_kecamatan: "",
+    d_kelurahan: "",
+    d_kota: "",
+    d_kode_pos: "",
+    d_provinsi: "",
+    pekerjaan: "",
+    kantor_bayar: "",
+    kelompok_pensiun: "",
+    jenis_kelamin: "",
+    jenis_usaha: "",
+    kode_jiwa: 0,
+    tmt_pensiun: "",
+    no_skep: "",
+    no_telepon: "",
+    norek: "",
+    pendidikan: "",
+    pangkat: "",
+    penerbit_skep: "",
+    npwp: "",
+    awal_flagging: "",
+    akhir_flagging: "",
+    mitra_flagging: "",
+    menempati_rumah: "",
+    status_kawin: "",
+    status_rumah: "",
+    agama: "",
+    nik: "",
+    geo_location: "",
+    bank: "",
+    ibu_kandung: "",
+    Keluarga: [defaultKeluarga],
+  },
   createdById: "",
   aoId: "",
 
   status: true,
   created_at: new Date(),
   updated_at: new Date(),
-};
-
-const defaultKeluarga: Keluarga = {
-  id: Date.now().toString(),
-  name: "",
-  no_telepon: null,
-  nik: null,
-  alamat: null,
-  pekerjaan: null,
-  tgl_lahir: null,
-  hubungan: "",
-  nopen: "",
 };

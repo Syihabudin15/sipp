@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `sumdan` ADD COLUMN `tbo` INTEGER NOT NULL DEFAULT 3;

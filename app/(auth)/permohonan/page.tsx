@@ -71,7 +71,7 @@ export default function Page() {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      width: 100,
+      width: 120,
     },
     {
       title: "Pemohon",
@@ -95,8 +95,12 @@ export default function Page() {
       render(value, record, index) {
         return (
           <div>
-            <p>Plafond : {IDRFormat(record.plafond)}</p>
-            <p>Tenor : {record.tenor} Bulan</p>
+            <p>
+              Plafond : <Tag color={"blue"}>{IDRFormat(record.plafond)}</Tag>
+            </p>
+            <p>
+              Tenor : <Tag color={"blue"}>{record.tenor} Bulan</Tag>
+            </p>
           </div>
         );
       },
@@ -136,18 +140,21 @@ export default function Page() {
       title: "Status",
       dataIndex: "status_final",
       key: "status_final",
+      width: 100,
       render: (_, record, i) => (
-        <Tag
-          color={
-            record.status_final === "TRANSFER"
-              ? "success"
-              : record.status_final === "DRAFT"
-              ? "blue"
-              : "error"
-          }
-        >
-          {record.status_final}
-        </Tag>
+        <div className="flex justify-center">
+          <Tag
+            color={
+              record.status_final === "TRANSFER"
+                ? "success"
+                : record.status_final === "DRAFT"
+                ? "blue"
+                : "error"
+            }
+          >
+            {record.status_final}
+          </Tag>
+        </div>
       ),
     },
     {
@@ -224,7 +231,11 @@ export default function Page() {
     }
     await fetch("/api/dapem", {
       method: "PUT",
-      body: JSON.stringify({ ...selected.selected, status_final: "ANTRI" }),
+      body: JSON.stringify({
+        ...selected.selected,
+        status_final: "ANTRI",
+        verif_status: "PENDING",
+      }),
     })
       .then((res) => res.json())
       .then(async (res) => {
@@ -235,6 +246,7 @@ export default function Page() {
           modal.success({
             content: `Data permohonan kredit ${selected.selected?.Debitur.nama_penerima} (${selected.selected?.nopen}) berhasil diajukan`,
           });
+          setSelected({ ...selected, openUpsert: false, selected: undefined });
           await getData();
         }
       })
@@ -324,7 +336,6 @@ export default function Page() {
         }`}
         loading={loading}
         okButtonProps={{
-          danger: true,
           onClick: () => handleSend(),
         }}
       >

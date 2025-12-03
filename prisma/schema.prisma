@@ -149,56 +149,53 @@ model JenisPembiayaan {
 }
 
 model Debitur {
-  nopen               String  @unique
-  nama_pensiunan      String
-  tgl_lahir_pensiunan String
-  gaji_pensiun        Int
-  nama_penerima       String
-  tgl_lahir_penerima  String
-  alm_peserta         String
-  kelurahan           String?
-  kecamatan           String
-  kota                String
-  provinsi            String?
-  kode_pos            String?
-  kantor_bayar        String
-  tmt_pensiun         String
-  no_skep             String
-  tgl_skep            String
-  nama_skep           String?
-  jenis_skep          String?
-  kode_jiwa           Int?
-  penerbit_skep       String?
-  npwp                String?
-  no_telepon          String?
-  pangkat             String?
-  awal_flagging       String?
-  akhir_flagging      String?
-  mitra_flagging      String?
-  kelompok_pensiun    String?
-  pendidikan          String?
-  jenis_kelamin       String?
-  agama               String?
-  nik                 String?
-  geo_location        String?
-  d_alm_peserta       String?
-  d_kelurahan         String?
-  d_kecamatan         String?
-  d_kota              String?
-  d_provinsi          String?
-  d_kode_pos          String?
-  status_rumah        String?
-  menempati_rumah     String?
-  pekerjaan           String?
-  alm_pekerjaan       String?
-  ibu_kandung         String?
-  jenis_usaha         String?
-  status_kawin        String?
-  bank                String?
-  norek               String?
+  nopen              String  @unique
+  gaji_pensiun       Int
+  nama_penerima      String
+  tgl_lahir_penerima String
+  alm_peserta        String
+  kelurahan          String?
+  kecamatan          String
+  kota               String
+  provinsi           String?
+  kode_pos           String?
+  kantor_bayar       String
+  tmt_pensiun        String
+  no_skep            String
+  tgl_skep           String
+  nama_skep          String?
+  kode_jiwa          Int?
+  penerbit_skep      String?
+  npwp               String?
+  no_telepon         String?
+  pangkat            String?
+  awal_flagging      String?
+  akhir_flagging     String?
+  mitra_flagging     String?
+  kelompok_pensiun   String?
+  pendidikan         String?
+  jenis_kelamin      String?
+  agama              String?
+  nik                String?
+  geo_location       String?
+  d_alm_peserta      String?
+  d_kelurahan        String?
+  d_kecamatan        String?
+  d_kota             String?
+  d_provinsi         String?
+  d_kode_pos         String?
+  status_rumah       String?
+  menempati_rumah    String?
+  pekerjaan          String?
+  alm_pekerjaan      String?
+  ibu_kandung        String?
+  jenis_usaha        String?
+  status_kawin       String?
+  bank               String?
+  norek              String?
 
-  dapems    Dapem[]
-  keluargas Keluarga[]
+  Dapem    Dapem[]
+  Keluarga Keluarga[]
 }
 
 model Keluarga {
@@ -232,11 +229,14 @@ model Dapem {
   status_final     EStatusFinal  @default(DRAFT)
   final_at         DateTime?
   verif_status     EStatusDapem?
+  verif_desc       String?       @db.Text
   verif_date       DateTime?
   slik_status      EStatusDapem?
   slik_date        DateTime?
+  slik_desc        String?       @db.Text
   approv_status    EStatusDapem?
   approv_date      DateTime?
+  approv_desc      String?       @db.Text
   pelunasan_status EStatusDapem?
   pelunasan_date   DateTime?
   pelunasan_ke     String?

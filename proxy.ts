@@ -6,5 +6,16 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/user"],
+  matcher: [
+    "/dashboard",
+    "/simulasi",
+    "/monitoring",
+    "/permohonan",
+    "/proses",
+    "/pelunasan",
+    "/pencairan",
+    "/debitur",
+    "/configs:path*",
+    "/proses:path*",
+  ],
 };

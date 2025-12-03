@@ -13,3 +13,8 @@ export const FormInput = dynamic(
     loading: () => <p>Loading...</p>,
   }
 );
+
+export const DetailDapem = dynamic(() => import("./DetailDapem"), {
+  ssr: false,
+  loading: () => <p>Loading...</p>,
+});

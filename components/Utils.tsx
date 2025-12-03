@@ -1,11 +1,12 @@
 "use client";
 
 import { CloudUploadOutlined, DeleteOutlined } from "@ant-design/icons";
-import { Button, Input, Select, Upload, UploadProps } from "antd";
+import { Badge, Button, Input, Select, Upload, UploadProps } from "antd";
 import moment from "moment";
 import { useState } from "react";
 // const { PV } = require("@formulajs/formulajs");
 import { PV } from "@formulajs/formulajs";
+import Link from "next/link";
 
 export interface IFormInput {
   label: string;
@@ -254,7 +255,7 @@ const UploadComponents = ({
     <div>
       {file ? (
         <div className="flex gap-2 items-center">
-          <p>{file.substring(0, 50) + "..."}</p>
+          <p>{file.substring(0, 30) + "..."}</p>
           <Button
             danger
             icon={<DeleteOutlined />}
@@ -278,5 +279,75 @@ const UploadComponents = ({
         </div>
       )}
     </div>
+  );
+};
+
+export const NotifItem = ({
+  name,
+  count,
+  link,
+}: {
+  name: string;
+  count: number;
+  link: string;
+}) => {
+  return (
+    <Link href={link}>
+      <Badge count={count} showZero>
+        <div className="border px-2 py-1 text-xs rounded bg-gray-50">
+          {name}
+        </div>
+      </Badge>
+    </Link>
+  );
+};
+
+interface Temp {
+  label: string;
+  key: string;
+  icon: React.ReactNode;
+}
+interface TTemp extends Temp {
+  children?: Temp[];
+}
+export const filterMenuItemsByPermission = (
+  items: TTemp[],
+  allowedKeys: string[]
+): TTemp[] => {
+  return (
+    items
+      // 1. Map (Rekursif): Memproses setiap item
+      .map((item) => {
+        // Jika item memiliki children, filter children-nya terlebih dahulu
+        if (item.children && item.children.length > 0) {
+          const filteredChildren = filterMenuItemsByPermission(
+            item.children,
+            allowedKeys
+          );
+
+          // Jika children ada setelah difilter, kembalikan item induk dengan children yang difilter
+          if (filteredChildren.length > 0) {
+            return {
+              ...item,
+              children: filteredChildren,
+            };
+          }
+        }
+
+        // 2. Filter (Item tunggal/induk tanpa children):
+        // Cek apakah key item ini termasuk dalam list izin
+        const isAllowed = allowedKeys.includes(item.key);
+
+        // Jika item adalah induk yang tidak memiliki children ATAU children-nya kosong
+        // DAN item ini diizinkan, kembalikan item tersebut.
+        if (isAllowed) {
+          return item;
+        }
+
+        // Jika item tidak memiliki children yang diizinkan DAN item induk tidak diizinkan
+        return null;
+      })
+      // 3. Membersihkan array dari nilai null yang dihasilkan oleh item yang tidak diizinkan
+      .filter(Boolean) as TTemp[]
   );
 };

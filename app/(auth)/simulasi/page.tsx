@@ -101,10 +101,16 @@ export default function Page() {
       moment(data.tgl_lahir_penerima, "DD-MM-YYYY").format("YYYY-MM-DD"),
       moment(data.created_at).format("YYYY-MM-DD")
     );
-    setProduks(produkss.filter((p) => year >= p.min_usia && year < p.max_usia));
-    // if (!data.ProdukPembiayaan) {
-    //   setData({ ...data, usia_tahun: year, usia_bulan: month, usia_hari: day });
-    // }
+    const filterProd = produkss.filter(
+      (p) => year >= p.min_usia && year < p.max_usia
+    );
+    setProduks(filterProd);
+    if (
+      data.produkPembiayaanId &&
+      !filterProd.find((p) => p.id === data.produkPembiayaanId)
+    ) {
+      reset();
+    }
     const maxTenor = getMaxTenor(data.ProdukPembiayaan.usia_lunas, year, month);
     const maxPlafond = getMaxPlafond(
       data.margin + data.margin_sumdan,
@@ -115,7 +121,7 @@ export default function Page() {
       data.plafond,
       data.tenor,
       data.margin + data.margin_sumdan,
-      data.pembulatan
+      data.pembulatan || 100
     );
     const admin = data.plafond * ((data.c_adm + data.c_adm_sumdan) / 100);
     const asuransi = data.plafond * (data.c_asuransi / 100);
@@ -138,8 +144,14 @@ export default function Page() {
       usia_tahun_lunas: yearLunas,
       usia_bulan_lunas: monthLunas,
       usia_hari_lunas: dayLunas,
-      max_tenor: maxTenor,
-      max_plafond: maxPlafond,
+      max_tenor:
+        maxTenor > data.ProdukPembiayaan.max_tenor
+          ? data.ProdukPembiayaan.max_tenor
+          : maxTenor,
+      max_plafond:
+        maxPlafond > data.ProdukPembiayaan.max_plafond
+          ? data.ProdukPembiayaan.max_plafond
+          : maxPlafond,
       angsuran: angsuran.angsuran,
       total_biaya:
         admin +
@@ -290,6 +302,7 @@ export default function Page() {
                   onChange: (e: string) => {
                     const filter = produks.find((j) => j.id === e);
                     if (!filter) return;
+                    console.log({ filter });
                     setData({
                       ...data,
                       produkPembiayaanId: e,
@@ -303,6 +316,8 @@ export default function Page() {
                       c_materai: filter.c_materai,
                       c_rekening: filter.c_rekening,
                       pembulatan: filter.Sumdan.pembulatan,
+                      // max_tenor: filter.max_tenor,
+                      // max_plafond: filter.max_plafond,
                     });
                   },
                 }}
@@ -724,6 +739,9 @@ const defaultDapem: IDapem = {
   approv_date: null,
   tbo: 0,
   penggunaan: null,
+  verif_desc: null,
+  slik_desc: null,
+  approv_desc: null,
 
   mutasi_status: null,
   mutasi_from: null,

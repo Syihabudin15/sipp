@@ -15,6 +15,15 @@ export interface IUser extends User {
   Role: Role;
 }
 
+export interface INotif {
+  verif: number;
+  slik: number;
+  approv: number;
+  akad: number;
+  si: number;
+  dropping: number;
+}
+
 export interface IPermission {
   name: string;
   path: string;
