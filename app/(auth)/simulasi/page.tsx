@@ -728,6 +728,9 @@ const defaultDapem: IDapem = {
   c_mutasi: 0,
   c_pelunasan: 0,
   pembulatan: 0,
+  berkas_status: "CABANG",
+  akad_nomor: null,
+  akad_date: null,
 
   status_final: "DRAFT",
   final_at: null,
@@ -760,6 +763,11 @@ const defaultDapem: IDapem = {
   file_pelunasan: null,
   file_pencairan: null,
   video_pencairan: null,
+  video_pencairan2: null,
+  video_pencairan3: null,
+  pencairanId: null,
+  penyerahanBerkasId: null,
+  penyerahanJaminanId: null,
 
   nopen: "",
   produkPembiayaanId: "",

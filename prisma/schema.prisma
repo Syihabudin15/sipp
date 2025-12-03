@@ -29,6 +29,13 @@ enum EStatusFinal {
   GAGAL
 }
 
+enum EStatusBerkas {
+  CABANG
+  SENDING
+  SUMDAN
+  PUSAT
+}
+
 model Role {
   id         String @id
   name       String @unique
@@ -101,11 +108,14 @@ model Sumdan {
   tbo         Int     @default(3)
   pembulatan  Int     @default(1000)
 
-  status           Boolean            @default(true)
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @default(now())
-  ProdukPembiayaan ProdukPembiayaan[]
-  users            User[]
+  status             Boolean             @default(true)
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @default(now())
+  ProdukPembiayaan   ProdukPembiayaan[]
+  users              User[]
+  pencairans         Pencairan[]
+  penyerahanBerkas   PenyerahanBerkas[]
+  penyerahanJaminans PenyerahanJaminan[]
 }
 
 model ProdukPembiayaan {
@@ -153,6 +163,7 @@ model Debitur {
   gaji_pensiun       Int
   nama_penerima      String
   tgl_lahir_penerima String
+  tempat_lahir       String?
   alm_peserta        String
   kelurahan          String?
   kecamatan          String
@@ -247,29 +258,105 @@ model Dapem {
   tbo              Int
   penggunaan       String?
   pembulatan       Int
+  berkas_status    EStatusBerkas @default(CABANG)
+  akad_nomor       String?
+  akad_date        DateTime?
 
-  file_pelunasan  String?
-  file_mutasi     String?
-  file_slik       String?
-  file_pengajuan  String?
-  file_wawancara  String?
-  file_asuransi   String?
-  file_akad       String?
-  file_pencairan  String? @db.Text
-  video_pencairan String?
+  file_pelunasan   String?
+  file_mutasi      String?
+  file_slik        String?
+  file_pengajuan   String?
+  file_wawancara   String?
+  file_asuransi    String?
+  file_akad        String?
+  file_pencairan   String?
+  video_pencairan  String?
+  video_pencairan2 String?
+  video_pencairan3 String?
 
   Debitur          Debitur          @relation(fields: [nopen], references: [nopen])
   ProdukPembiayaan ProdukPembiayaan @relation(fields: [produkPembiayaanId], references: [id])
   JenisPembiayaan  JenisPembiayaan  @relation(fields: [jenisPembiayaanId], references: [id])
 
-  status             Boolean  @default(true)
-  created_at         DateTime @default(now())
-  updated_at         DateTime @default(now())
-  nopen              String
-  produkPembiayaanId String
-  jenisPembiayaanId  String
-  CreatedBy          User     @relation("CreateDapemRelation", fields: [createdById], references: [id])
-  createdById        String
-  AO                 User     @relation("AODapemRelation", fields: [aoId], references: [id])
-  aoId               String
+  status              Boolean            @default(true)
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @default(now())
+  nopen               String
+  produkPembiayaanId  String
+  jenisPembiayaanId   String
+  CreatedBy           User               @relation("CreateDapemRelation", fields: [createdById], references: [id])
+  createdById         String
+  AO                  User               @relation("AODapemRelation", fields: [aoId], references: [id])
+  aoId                String
+  Pencairan           Pencairan?         @relation(fields: [pencairanId], references: [id])
+  pencairanId         String?
+  PenyerahanBerkas    PenyerahanBerkas?  @relation(fields: [penyerahanBerkasId], references: [id])
+  penyerahanBerkasId  String?
+  PenyerahanJaminan   PenyerahanJaminan? @relation(fields: [penyerahanJaminanId], references: [id])
+  penyerahanJaminanId String?
+  Pelunasan           Pelunasan?
+}
+
+model Pencairan {
+  id               String       @id
+  pencairan_status EStatusFinal @default(ANTRI)
+  pencairan_date   DateTime?
+  file_si          String?
+  file_proof       String?
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  Sumdan     Sumdan   @relation(fields: [sumdanId], references: [id])
+  sumdanId   String
+  Dapem      Dapem[]
+}
+
+model PenyerahanBerkas {
+  id            String        @id
+  berkas_status EStatusBerkas @default(SENDING)
+  berkas_date   DateTime?
+  file_si       String?
+  file_proof    String?
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  Sumdan     Sumdan   @relation(fields: [sumdanId], references: [id])
+  sumdanId   String
+  Dapem      Dapem[]
+}
+
+model PenyerahanJaminan {
+  id             String        @id
+  jaminan_status EStatusBerkas @default(SENDING)
+  jaminan_date   DateTime?
+  file_si        String?
+  file_proof     String?
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  Sumdan     Sumdan   @relation(fields: [sumdanId], references: [id])
+  sumdanId   String
+  Dapem      Dapem[]
+}
+
+model Pelunasan {
+  id             String        @id
+  nominal        Int           @default(0)
+  nominal_sumdan Int           @default(0)
+  file_pelunasan String?
+  file_proof     String?
+  pelunasan_date DateTime?
+  alasan         String
+  keterangan     String?
+  status_jaminan EStatusBerkas @default(SUMDAN)
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  Dapem   Dapem  @relation(fields: [dapemId], references: [id])
+  dapemId String @unique
 }

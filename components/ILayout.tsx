@@ -25,6 +25,14 @@ import {
   TransactionOutlined,
   LogoutOutlined,
   BellOutlined,
+  PrinterOutlined,
+  PayCircleOutlined,
+  FolderOpenOutlined,
+  FolderOutlined,
+  FolderAddOutlined,
+  FolderViewOutlined,
+  SafetyCertificateOutlined,
+  SafetyOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useUser } from "./contexts/UserContext";
@@ -57,13 +65,79 @@ export const menuItems = [
     key: "/proses",
     icon: <AuditOutlined />,
     label: "Proses Pembiayaan",
-    children: [],
+    children: [
+      {
+        key: "/proses/verif",
+        icon: <AuditOutlined />,
+        label: "Proses VERIFIKASI",
+      },
+      {
+        key: "/proses/slik",
+        icon: <AuditOutlined />,
+        label: "Proses SLIK",
+      },
+      {
+        key: "/proses/approv",
+        icon: <AuditOutlined />,
+        label: "Proses APPROVAL",
+      },
+    ],
   },
   {
     key: "/pencairan",
     icon: <TransactionOutlined />,
     label: "Data Pencairan",
-    children: [],
+    children: [
+      {
+        key: "/pencairan/cetak",
+        icon: <PrinterOutlined />,
+        label: "Cetak SI Pencairan",
+      },
+      {
+        key: "/pencairan/list",
+        icon: <PayCircleOutlined />,
+        label: "Permohonan Pencairan",
+      },
+    ],
+  },
+  {
+    key: "/pemberkasan",
+    icon: <FolderViewOutlined />,
+    label: "Berkas Pembiayaan",
+  },
+  {
+    key: "/penyerahan-berkas",
+    icon: <FolderAddOutlined />,
+    label: "Penyerahan Berkas",
+    children: [
+      {
+        key: "/penyerahan-berkas/cetak",
+        icon: <PrinterOutlined />,
+        label: "Cetak Penyerahan Berkas",
+      },
+      {
+        key: "/penyerahan-berkas/list",
+        icon: <FolderOpenOutlined />,
+        label: "List Penyerahan Berkas",
+      },
+    ],
+  },
+  {
+    key: "/penyerahan-jaminan",
+    icon: <SafetyCertificateOutlined />,
+    label: "Penyerahan Jaminan",
+    children: [
+      {
+        key: "/penyerahan-jaminan/cetak",
+        icon: <PrinterOutlined />,
+        label: "Cetak Penyerahan Jaminan",
+      },
+      {
+        key: "/penyerahan-jaminan/list",
+        icon: <SafetyOutlined />,
+        label: "List Penyerahan Jaminan",
+      },
+    ],
   },
   {
     key: "/pelunasan",

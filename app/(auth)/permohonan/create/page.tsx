@@ -264,13 +264,13 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
             } data Permohonan Kredit berhasil.`,
           });
           setTimeout(() => {
-            if(defaultData){
-              if(defaultData.status_final === "DRAFT"){
+            if (defaultData) {
+              if (defaultData.status_final === "DRAFT") {
                 window && window.location.replace("/permohonan");
-              }else{
+              } else {
                 window && window.location.replace("/monitoring");
               }
-            }else{
+            } else {
               window && window.location.replace("/permohonan");
             }
           }, 1000);
@@ -353,6 +353,22 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                   setData({
                     ...data,
                     Debitur: { ...data.Debitur, nik: e },
+                  }),
+              }}
+            />
+          </Col>
+          <Col xs={12} lg={6}>
+            <FormInput
+              data={{
+                label: "Tempat Lahir",
+                type: "text",
+                mode: "vertical",
+                required: true,
+                value: data.Debitur.tempat_lahir,
+                onChange: (e: string) =>
+                  setData({
+                    ...data,
+                    Debitur: { ...data.Debitur, tempat_lahir: e },
                   }),
               }}
             />
@@ -1661,9 +1677,11 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
             <FolderOutlined /> Berkas Permohonan
           </div>
         }
-        style={{ marginBottom: 10 }}
+        style={{
+          marginBottom: 10,
+        }}
       >
-        <div>
+        <div className="p-1 border-b border-gray-300">
           <FormInput
             data={{
               label: "Berkas SLIK",
@@ -1675,7 +1693,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
             }}
           />
         </div>
-        <div>
+        <div className="p-1 border-b border-gray-300">
           <FormInput
             data={{
               label: "Berkas Pengajuan",
@@ -1687,7 +1705,31 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
             }}
           />
         </div>
-        <div>
+        <div className="p-1 border-b border-gray-300">
+          <FormInput
+            data={{
+              label: "Berkas Akad",
+              value: data.file_akad,
+              onChange: (e: string) => setData({ ...data, file_akad: e }),
+              type: "upload",
+              mode: "horizontal",
+              accept: "application/pdf",
+            }}
+          />
+        </div>
+        <div className="p-1 border-b border-gray-300">
+          <FormInput
+            data={{
+              label: "Berkas Pencairan",
+              value: data.file_pencairan,
+              onChange: (e: string) => setData({ ...data, file_pencairan: e }),
+              type: "upload",
+              mode: "horizontal",
+              accept: "application/pdf",
+            }}
+          />
+        </div>
+        <div className="p-1 border-b border-gray-300">
           <FormInput
             data={{
               label: "Video Wawancara",
@@ -1699,12 +1741,24 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
             }}
           />
         </div>
-        <div>
+        <div className="p-1 border-b border-gray-300">
           <FormInput
             data={{
               label: "Video Asuransi",
               value: data.file_asuransi,
               onChange: (e: string) => setData({ ...data, file_asuransi: e }),
+              type: "upload",
+              mode: "horizontal",
+              accept: "video/mp4",
+            }}
+          />
+        </div>
+        <div className="p-1 border-b border-gray-300">
+          <FormInput
+            data={{
+              label: "Video Pencairan",
+              value: data.video_pencairan,
+              onChange: (e: string) => setData({ ...data, video_pencairan: e }),
               type: "upload",
               mode: "horizontal",
               accept: "video/mp4",
@@ -1788,6 +1842,9 @@ const defaultDapem: IDapemCreate = {
   c_mutasi: 0,
   c_pelunasan: 0,
   pembulatan: 0,
+  berkas_status: "CABANG",
+  akad_nomor: null,
+  akad_date: null,
 
   status_final: "DRAFT",
   final_at: null,
@@ -1820,6 +1877,11 @@ const defaultDapem: IDapemCreate = {
   file_pelunasan: null,
   file_pencairan: null,
   video_pencairan: null,
+  video_pencairan2: null,
+  video_pencairan3: null,
+  pencairanId: null,
+  penyerahanBerkasId: null,
+  penyerahanJaminanId: null,
 
   nopen: "",
   produkPembiayaanId: "",
@@ -1833,6 +1895,7 @@ const defaultDapem: IDapemCreate = {
     nama_penerima: "",
     nama_skep: "",
     tgl_lahir_penerima: "",
+    tempat_lahir: null,
     tgl_skep: "",
     gaji_pensiun: 0,
     alm_pekerjaan: "",

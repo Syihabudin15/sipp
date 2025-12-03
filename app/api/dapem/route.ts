@@ -7,13 +7,13 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = async (request: NextRequest) => {
   const page = request.nextUrl.searchParams.get("page") || "1";
   const limit = request.nextUrl.searchParams.get("limit") || "50";
-  const search = request.nextUrl.searchParams.get("search") || "";
-  const status_final = request.nextUrl.searchParams.get("status_final") || "";
-  const slik_status = request.nextUrl.searchParams.get("slik_status") || "";
-  const verif_status = request.nextUrl.searchParams.get("verif_status") || "";
-  const approv_status = request.nextUrl.searchParams.get("approv_status") || "";
+  const search = request.nextUrl.searchParams.get("search");
+  const status_final = request.nextUrl.searchParams.get("status_final");
+  const slik_status = request.nextUrl.searchParams.get("slik_status");
+  const verif_status = request.nextUrl.searchParams.get("verif_status");
+  const approv_status = request.nextUrl.searchParams.get("approv_status");
   const jenisPembiayaanId =
-    request.nextUrl.searchParams.get("jenisPembiayaanId") || "";
+    request.nextUrl.searchParams.get("jenisPembiayaanId");
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
   const find = await prisma.dapem.findMany({
@@ -28,9 +28,23 @@ export const GET = async (request: NextRequest) => {
         },
       }),
       ...(status_final && { status_final: status_final as EStatusFinal }),
-      ...(slik_status && { slik_status: slik_status as EStatusDapem }),
-      ...(verif_status && { verif_status: verif_status as EStatusDapem }),
-      ...(approv_status && { approv_status: approv_status as EStatusDapem }),
+      ...(slik_status
+        ? slik_status === "all"
+          ? { slik_status: { not: null } }
+          : { slik_status: slik_status as EStatusDapem }
+        : {}),
+
+      ...(verif_status
+        ? verif_status === "all"
+          ? { verif_status: { not: null } }
+          : { verif_status: verif_status as EStatusDapem }
+        : {}),
+
+      ...(approv_status
+        ? approv_status === "all"
+          ? { approv_status: { not: null } }
+          : { approv_status: approv_status as EStatusDapem }
+        : {}),
       ...(jenisPembiayaanId && { jenisPembiayaanId: jenisPembiayaanId }),
       status: true,
     },
@@ -68,9 +82,23 @@ export const GET = async (request: NextRequest) => {
         },
       }),
       ...(status_final && { status_final: status_final as EStatusFinal }),
-      ...(slik_status && { slik_status: slik_status as EStatusDapem }),
-      ...(verif_status && { verif_status: verif_status as EStatusDapem }),
-      ...(approv_status && { approv_status: approv_status as EStatusDapem }),
+      ...(slik_status
+        ? slik_status === "all"
+          ? { slik_status: { not: null } }
+          : { slik_status: slik_status as EStatusDapem }
+        : {}),
+
+      ...(verif_status
+        ? verif_status === "all"
+          ? { verif_status: { not: null } }
+          : { verif_status: verif_status as EStatusDapem }
+        : {}),
+
+      ...(approv_status
+        ? approv_status === "all"
+          ? { approv_status: { not: null } }
+          : { approv_status: approv_status as EStatusDapem }
+        : {}),
       ...(jenisPembiayaanId && { jenisPembiayaanId: jenisPembiayaanId }),
       status: true,
     },

@@ -16,6 +16,8 @@ export const config = {
     "/pencairan",
     "/debitur",
     "/configs:path*",
-    "/proses:path*",
+    "/proses/verif",
+    "/proses/slik",
+    "/proses/approv",
   ],
 };

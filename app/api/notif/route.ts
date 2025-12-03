@@ -61,7 +61,7 @@ export const GET = async (req: NextRequest) => {
     prisma.dapem.count({
       where: {
         approv_status: "SETUJU",
-        status_final: "ANTRI",
+        status_final: "PROSES",
         file_akad: null,
         ...(findUser.sumdanId && {
           ProdukPembiayaan: { sumdanId: findUser.sumdanId },
@@ -71,8 +71,9 @@ export const GET = async (req: NextRequest) => {
     prisma.dapem.count({
       where: {
         approv_status: "SETUJU",
-        status_final: "ANTRI",
+        status_final: "PROSES",
         file_akad: { not: null },
+        pencairanId: null,
         ...(findUser.sumdanId && {
           ProdukPembiayaan: { sumdanId: findUser.sumdanId },
         }),
@@ -82,6 +83,9 @@ export const GET = async (req: NextRequest) => {
       where: {
         approv_status: "SETUJU",
         status_final: "PROSES",
+        file_akad: { not: null },
+        pencairanId: { not: null },
+        Pencairan: { pencairan_status: { not: "TRANSFER" } },
         ...(findUser.sumdanId && {
           ProdukPembiayaan: { sumdanId: findUser.sumdanId },
         }),

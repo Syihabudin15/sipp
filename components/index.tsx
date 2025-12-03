@@ -18,3 +18,8 @@ export const DetailDapem = dynamic(() => import("./DetailDapem"), {
   ssr: false,
   loading: () => <p>Loading...</p>,
 });
+
+export const PDFAkad = dynamic(() => import("./pdfs/Akad"), {
+  ssr: false,
+  loading: () => <p>Loading...</p>,
+});
