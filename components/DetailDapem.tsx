@@ -7,11 +7,13 @@ import {
   ClockCircleOutlined,
   CloseCircleOutlined,
   FolderOutlined,
+  SafetyOutlined,
+  TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { IDapem } from "./IInterfaces";
+import { IDapem, IDebitur } from "./IInterfaces";
 import { getAngsuran, IDRFormat } from "./Utils";
-import { App, Button, Card, Tabs } from "antd";
+import { App, Button, Card, Divider, Tabs } from "antd";
 import { EStatusDapem } from "@prisma/client";
 import moment from "moment";
 import { FormInput } from ".";
@@ -41,7 +43,7 @@ export default function DetailDapem({
           <UserOutlined /> Data Debitur & Keluarga
         </span>
       ),
-      children: <div className="p-4 bg-white rounded-lg"></div>,
+      children: <DataDebitur data={data.Debitur} />,
     },
     {
       key: "3",
@@ -278,7 +280,11 @@ const ProsesStep = ({
             }}
           />
           <div className="flex justify-end">
-            <Button type="primary" loading={loading}>
+            <Button
+              type="primary"
+              loading={loading}
+              onClick={() => handleSubmit()}
+            >
               Submit
             </Button>
           </div>
@@ -287,3 +293,69 @@ const ProsesStep = ({
     </div>
   );
 };
+
+const DataDebitur = ({ data }: { data: IDebitur }) => {
+  return (
+    <div>
+      <Card
+        title={
+          <div>
+            <UserOutlined /> Informasi Debitur
+          </div>
+        }
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <DataItem label={"Nama Lengkap"} value={data.nama_penerima} />
+          <DataItem label={"Nomor NIK"} value={data.nik} />
+          <DataItem
+            label={"Tanggal Lahir"}
+            value={moment(data.tgl_lahir_penerima, "DD-MM-YYYY").format(
+              "DD/MM/YYYY"
+            )}
+          />
+          <DataItem label={"Jenis Kelamin"} value={data.jenis_kelamin} />
+          <DataItem label={"Agama"} value={data.agama} />
+          <DataItem label={"Pendidikan Terakhir"} value={data.pendidikan} />
+          <DataItem label={"Status Perkawinan"} value={data.status_kawin} />
+          <DataItem label={"Nomor Telepon"} value={data.no_telepon} />
+          <DataItem label={"Nomor NPWP"} value={data.npwp} />
+        </div>
+      </Card>
+      <div className="mt-2"></div>
+      <Card
+        title={
+          <div>
+            <TeamOutlined /> Data Keluarga Debitur
+          </div>
+        }
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <DataItem label={"Nomor Pensiun"} value={data.nopen} />
+        </div>
+      </Card>
+      <div className="mt-2"></div>
+      <Card
+        title={
+          <div>
+            <SafetyOutlined /> Data Pensiun Debitur
+          </div>
+        }
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <DataItem label={"Nomor Pensiun"} value={data.nopen} />
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const DataItem = ({ label, value }: { label: string; value: any }) => (
+  <div className="flex flex-col">
+    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+      {label}
+    </span>
+    <span className="text-base font-semibold text-gray-900 break-words mt-0.5">
+      {value || "-"}
+    </span>
+  </div>
+);
