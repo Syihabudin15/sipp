@@ -2,6 +2,7 @@ import { IDapem } from "@/components/IInterfaces";
 import { getSession } from "@/lib/Auth";
 import prisma, { generateDapemId } from "@/lib/Prisma";
 import { EStatusDapem, EStatusFinal } from "@prisma/client";
+import moment from "moment";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (request: NextRequest) => {
@@ -14,7 +15,16 @@ export const GET = async (request: NextRequest) => {
   const approv_status = request.nextUrl.searchParams.get("approv_status");
   const jenisPembiayaanId =
     request.nextUrl.searchParams.get("jenisPembiayaanId");
+  const sumdanId = request.nextUrl.searchParams.get("sumdanId");
+  const backdate = request.nextUrl.searchParams.get("backdate");
   const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  const session = await getSession();
+  if (!session)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
+  const user = await prisma.user.findFirst({ where: { id: session.user.id } });
+  if (!user)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
 
   const find = await prisma.dapem.findMany({
     where: {
@@ -46,6 +56,14 @@ export const GET = async (request: NextRequest) => {
           : { approv_status: approv_status as EStatusDapem }
         : {}),
       ...(jenisPembiayaanId && { jenisPembiayaanId: jenisPembiayaanId }),
+      ...(sumdanId && { ProdukPembiayaan: { sumdanId: sumdanId } }),
+      ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
+      ...(backdate && {
+        created_at: {
+          gte: moment(backdate.split(",")[0]).toDate(),
+          lte: moment(backdate.split(",")[1]).toDate(),
+        },
+      }),
       status: true,
     },
     skip: skip,
@@ -100,6 +118,14 @@ export const GET = async (request: NextRequest) => {
           : { approv_status: approv_status as EStatusDapem }
         : {}),
       ...(jenisPembiayaanId && { jenisPembiayaanId: jenisPembiayaanId }),
+      ...(sumdanId && { ProdukPembiayaan: { sumdanId: sumdanId } }),
+      ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
+      ...(backdate && {
+        created_at: {
+          gte: moment(backdate.split(",")[0]).toDate(),
+          lte: moment(backdate.split(",")[1]).toDate(),
+        },
+      }),
       status: true,
     },
   });

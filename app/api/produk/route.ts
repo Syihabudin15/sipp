@@ -1,3 +1,4 @@
+import { getSession } from "@/lib/Auth";
 import prisma, { generateProdukId } from "@/lib/Prisma";
 import { ProdukPembiayaan } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,9 +9,17 @@ export const GET = async (request: NextRequest) => {
   const search = request.nextUrl.searchParams.get("search") || "";
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
+  const session = await getSession();
+  if (!session)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
+  const user = await prisma.user.findFirst({ where: { id: session.user.id } });
+  if (!user)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
+
   const find = await prisma.produkPembiayaan.findMany({
     where: {
       ...(search && { name: { contains: search } }),
+      ...(user.sumdanId && { sumdanId: user.sumdanId }),
       status: true,
     },
     skip: skip,
@@ -24,6 +33,7 @@ export const GET = async (request: NextRequest) => {
   const total = await prisma.produkPembiayaan.count({
     where: {
       ...(search && { name: { contains: search } }),
+      ...(user.sumdanId && { sumdanId: user.sumdanId }),
       status: true,
     },
   });

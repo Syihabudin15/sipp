@@ -1,3 +1,4 @@
+import { getSession } from "@/lib/Auth";
 import prisma from "@/lib/Prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -6,6 +7,12 @@ export const GET = async (request: NextRequest) => {
   const limit = request.nextUrl.searchParams.get("limit") || "50";
   const search = request.nextUrl.searchParams.get("search") || "";
   const skip = (parseInt(page) - 1) * parseInt(limit);
+  const session = await getSession();
+  if (!session)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
+  const user = await prisma.user.findFirst({ where: { id: session.user.id } });
+  if (!user)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
 
   const find = await prisma.debitur.findMany({
     where: {
@@ -14,6 +21,9 @@ export const GET = async (request: NextRequest) => {
           { nopen: { contains: search } },
           { nama_penerima: { contains: search } },
         ],
+      }),
+      ...(user.sumdanId && {
+        Dapem: { some: { ProdukPembiayaan: { sumdanId: user.sumdanId } } },
       }),
     },
     skip: skip,
@@ -27,6 +37,9 @@ export const GET = async (request: NextRequest) => {
           { nopen: { contains: search } },
           { nama_penerima: { contains: search } },
         ],
+      }),
+      ...(user.sumdanId && {
+        Dapem: { some: { ProdukPembiayaan: { sumdanId: user.sumdanId } } },
       }),
     },
   });

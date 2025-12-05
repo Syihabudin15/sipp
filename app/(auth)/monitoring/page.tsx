@@ -3,6 +3,7 @@
 import { FormInput, PDFAkad } from "@/components";
 import { IActionTable, IDapem, IPageProps } from "@/components/IInterfaces";
 import { IDRFormat } from "@/components/Utils";
+import { useAccess } from "@/lib/Permission";
 import {
   ArrowRightOutlined,
   DeleteOutlined,
@@ -13,12 +14,15 @@ import {
   ReadOutlined,
   RobotOutlined,
 } from "@ant-design/icons";
+import { JenisPembiayaan, Sumdan } from "@prisma/client";
 import {
   App,
   Button,
   Card,
+  DatePicker,
   Input,
   Modal,
+  Select,
   Table,
   TableProps,
   Tag,
@@ -29,6 +33,7 @@ import moment from "moment";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 const { Paragraph } = Typography;
+const { RangePicker } = DatePicker;
 
 interface IActionTableAkad<T> extends IActionTable<T> {
   cetakAkad: boolean;
@@ -43,6 +48,10 @@ export default function Page() {
     total: 0,
     data: [],
     search: "",
+    sumdanId: "",
+    jenisPembiayaanId: "",
+    status_final: "",
+    backdate: "",
   });
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<IActionTableAkad<IDapem>>({
@@ -53,7 +62,10 @@ export default function Page() {
     openAkad: false,
     showAkad: false,
   });
+  const [sumdans, setSumdans] = useState<Sumdan[]>([]);
+  const [jeniss, setJeniss] = useState<JenisPembiayaan[]>([]);
   const { modal } = App.useApp();
+  const { hasAccess } = useAccess("/monitoring");
 
   const getData = async () => {
     setLoading(true);
@@ -62,6 +74,18 @@ export default function Page() {
     params.append("limit", pageProps.limit.toString());
     if (pageProps.search) {
       params.append("search", pageProps.search);
+    }
+    if (pageProps.sumdanId) {
+      params.append("sumdanId", pageProps.sumdanId);
+    }
+    if (pageProps.jenisPembiayaanId) {
+      params.append("jenisPembiayaanId", pageProps.jenisPembiayaanId);
+    }
+    if (pageProps.status_final) {
+      params.append("status_final", pageProps.status_final);
+    }
+    if (pageProps.backdate) {
+      params.append("backdate", pageProps.backdate);
     }
     const res = await fetch(`/api/dapem?${params.toString()}`);
     const json = await res.json();
@@ -78,7 +102,26 @@ export default function Page() {
       await getData();
     }, 200);
     return () => clearTimeout(timeout);
-  }, [pageProps.page, pageProps.limit, pageProps.search]);
+  }, [
+    pageProps.page,
+    pageProps.limit,
+    pageProps.search,
+    pageProps.sumdanId,
+    pageProps.jenisPembiayaanId,
+    pageProps.status_final,
+    pageProps.backdate,
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      await fetch("/api/sumdan")
+        .then((res) => res.json())
+        .then((res) => setSumdans(res.data));
+      await fetch("/api/jenis")
+        .then((res) => res.json())
+        .then((res) => setJeniss(res.data));
+    })();
+  }, []);
 
   const columns: TableProps<IDapem>["columns"] = [
     {
@@ -187,7 +230,7 @@ export default function Page() {
       title: "Status VERIFIKASI",
       dataIndex: "verif_status",
       key: "verif_status",
-      width: 200,
+      width: 250,
       render: (_, record, i) => (
         <div>
           <p>
@@ -225,7 +268,7 @@ export default function Page() {
       title: "Status SLIK",
       dataIndex: "slik_status",
       key: "slik_status",
-      width: 200,
+      width: 250,
       render: (_, record, i) => (
         <div>
           <p>
@@ -263,7 +306,7 @@ export default function Page() {
       title: "Status APPROVAL",
       dataIndex: "approv_status",
       key: "approv_status",
-      width: 200,
+      width: 250,
       render: (_, record, i) => (
         <div>
           <p>
@@ -347,15 +390,21 @@ export default function Page() {
                 setSelected({ ...selected, selected: record, showAkad: true })
               }
             ></Button>
-            <Button
-              icon={<PrinterOutlined />}
-              type="primary"
-              size="small"
-              disabled={record.approv_status !== "SETUJU"}
-              onClick={() =>
-                setSelected({ ...selected, selected: record, cetakAkad: true })
-              }
-            ></Button>
+            {hasAccess("update") && (
+              <Button
+                icon={<PrinterOutlined />}
+                type="primary"
+                size="small"
+                disabled={record.approv_status !== "SETUJU"}
+                onClick={() =>
+                  setSelected({
+                    ...selected,
+                    selected: record,
+                    cetakAkad: true,
+                  })
+                }
+              ></Button>
+            )}
           </div>
         );
       },
@@ -372,22 +421,27 @@ export default function Page() {
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Link href={`/permohonan/update/${record.id}`}>
+          {hasAccess("update") && (
+            <Link href={`/permohonan/update/${record.id}`}>
+              <Button
+                icon={<EditOutlined />}
+                size="small"
+                type="primary"
+              ></Button>
+            </Link>
+          )}
+          {hasAccess("delete") && (
             <Button
-              icon={<EditOutlined />}
+              icon={<DeleteOutlined />}
               size="small"
               type="primary"
+              danger
+              onClick={() =>
+                setSelected({ ...selected, openDelete: true, selected: record })
+              }
+              disabled={record.status_final === "TRANSFER"}
             ></Button>
-          </Link>
-          <Button
-            icon={<DeleteOutlined />}
-            size="small"
-            type="primary"
-            danger
-            onClick={() =>
-              setSelected({ ...selected, openDelete: true, selected: record })
-            }
-          ></Button>
+          )}
           <Link href={"/monitoring/" + record.id}>
             <Tooltip
               title={`Detail Data ${record.Debitur.nama_penerima} (${record.nopen})`}
@@ -459,7 +513,45 @@ export default function Page() {
       }
       styles={{ body: { padding: 5 } }}
     >
-      <div className="flex justify-between my-1">
+      <div className="flex justify-between my-1 gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          <RangePicker
+            size="small"
+            onChange={(date, dateStr) =>
+              setPageProps({ ...pageProps, backdate: dateStr })
+            }
+          />
+          <Select
+            size="small"
+            placeholder="Pilih Sumdan..."
+            options={sumdans.map((s) => ({ label: s.code, value: s.id }))}
+            onChange={(e) => setPageProps({ ...pageProps, sumdanId: e })}
+            allowClear
+          />
+          <Select
+            size="small"
+            placeholder="Pilih Jenis..."
+            options={jeniss.map((s) => ({ label: s.name, value: s.id }))}
+            onChange={(e) =>
+              setPageProps({ ...pageProps, jenisPembiayaanId: e })
+            }
+            allowClear
+          />
+          <Select
+            size="small"
+            placeholder="Pilih Status..."
+            options={[
+              { label: "ANTRI", value: "ANTRI" },
+              { label: "PROSES", value: "PROSES" },
+              { label: "TRANSFER", value: "TRANSFER" },
+              { label: "GAGAL", value: "GAGAL" },
+              { label: "LUNAS", value: "LUNAS" },
+              { label: "DRAFT", value: "DRAFT" },
+            ]}
+            onChange={(e) => setPageProps({ ...pageProps, status_final: e })}
+            allowClear
+          />
+        </div>
         <Input.Search
           size="small"
           style={{ width: 170 }}

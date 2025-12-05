@@ -205,7 +205,8 @@ const DataPembiayaan = ({ data }: { data: IDapem }) => {
           bordered
           column={1}
           size="middle"
-          labelStyle={{ width: "50%" }}
+          // labelStyle={{ width: "50%" }}
+          styles={{ label: { width: "50%" } }}
           title={
             <span className="font-semibold text-base">Rincian Pembiayaan</span>
           }
@@ -280,7 +281,8 @@ const DataPembiayaan = ({ data }: { data: IDapem }) => {
           bordered
           column={1}
           size="middle"
-          labelStyle={{ width: "50%" }}
+          // labelStyle={{ width: "50%" }}
+          styles={{ label: { width: "50%" } }}
           title={
             <span className="font-semibold text-base">
               Terima Bersih & Biaya - Biaya
@@ -360,7 +362,8 @@ const DataPembiayaan = ({ data }: { data: IDapem }) => {
           bordered
           column={1}
           size="middle"
-          labelStyle={{ width: "50%" }}
+          // labelStyle={{ width: "50%" }}
+          styles={{ label: { width: "50%" } }}
         >
           <Descriptions.Item label="Terima Kotor">
             <Text className="font-bold " style={{ color: "blue" }}>
@@ -572,7 +575,7 @@ const DataItem = ({ label, value }: { label: string; value: any }) => (
     <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
       {label}
     </span>
-    <span className="text-base font-semibold text-gray-900 break-words mt-0.5">
+    <span className="text-base font-semibold text-gray-900 wrap-break-word mt-0.5">
       {value || "-"}
     </span>
   </div>

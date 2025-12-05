@@ -5,6 +5,7 @@ import {
   Debitur,
   JenisPembiayaan,
   Keluarga,
+  Pencairan,
   ProdukPembiayaan,
   Role,
   Sumdan,
@@ -67,4 +68,9 @@ export interface IDapem extends Dapem {
   JenisPembiayaan: JenisPembiayaan;
   CreatedBy: User;
   AO: IAO;
+}
+
+export interface IPencairan extends Pencairan {
+  Dapem: IDapem[];
+  Sumdan: Sumdan;
 }

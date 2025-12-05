@@ -3,6 +3,7 @@
 import { FormInput } from "@/components";
 import { IActionTable, IPageProps } from "@/components/IInterfaces";
 import { IDRFormat, IDRToNumber } from "@/components/Utils";
+import { useAccess } from "@/lib/Permission";
 import {
   BankOutlined,
   DeleteOutlined,
@@ -15,7 +16,7 @@ import {
   SaveOutlined,
 } from "@ant-design/icons";
 import { ProdukPembiayaan, Sumdan } from "@prisma/client";
-import { App, Button, Card, Input, Modal, Table, TableProps, Tag } from "antd";
+import { App, Button, Card, Input, Modal, Table, TableProps } from "antd";
 import { HookAPI } from "antd/es/modal/useModal";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -39,6 +40,7 @@ export default function Page() {
   });
   const [loading, setLoading] = useState(false);
   const { modal } = App.useApp();
+  const { hasAccess } = useAccess("/configs/sumdan");
 
   const getData = async () => {
     setLoading(true);
@@ -135,23 +137,27 @@ export default function Page() {
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button
-            icon={<EditOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openUpsert: true, selected: record })
-            }
-            size="small"
-            type="primary"
-          ></Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openDelete: true, selected: record })
-            }
-            size="small"
-            type="primary"
-            danger
-          ></Button>
+          {hasAccess("update") && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openUpsert: true, selected: record })
+              }
+              size="small"
+              type="primary"
+            ></Button>
+          )}
+          {hasAccess("delete") && (
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openDelete: true, selected: record })
+              }
+              size="small"
+              type="primary"
+              danger
+            ></Button>
+          )}
         </div>
       ),
     },
@@ -167,16 +173,18 @@ export default function Page() {
       styles={{ body: { padding: 5 } }}
     >
       <div className="flex justify-between my-1">
-        <Button
-          size="small"
-          type="primary"
-          icon={<PlusCircleFilled />}
-          onClick={() =>
-            setUpsert({ ...upsert, openUpsert: true, selected: undefined })
-          }
-        >
-          Add New
-        </Button>
+        {hasAccess("write") && (
+          <Button
+            size="small"
+            type="primary"
+            icon={<PlusCircleFilled />}
+            onClick={() =>
+              setUpsert({ ...upsert, openUpsert: true, selected: undefined })
+            }
+          >
+            Add New
+          </Button>
+        )}
         <Input.Search
           size="small"
           style={{ width: 170 }}
@@ -211,7 +219,12 @@ export default function Page() {
         expandable={{
           expandedRowRender: (record) => {
             return (
-              <TableProduk record={record} getData={getData} modal={modal} />
+              <TableProduk
+                record={record}
+                getData={getData}
+                modal={modal}
+                hasAccess={hasAccess}
+              />
             );
           },
         }}
@@ -526,17 +539,18 @@ function TableProduk({
   record,
   getData,
   modal,
+  hasAccess,
 }: {
   record: ISumdan;
   getData: Function;
   modal: HookAPI;
+  hasAccess: Function;
 }) {
   const [upsert, setUpsert] = useState<IActionTable<ProdukPembiayaan>>({
     openUpsert: false,
     openDelete: false,
     selected: undefined,
   });
-  const [loading, setLoading] = useState(false);
 
   const columns: TableProps<ProdukPembiayaan>["columns"] = [
     {
@@ -615,23 +629,27 @@ function TableProduk({
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button
-            icon={<EditOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openUpsert: true, selected: record })
-            }
-            size="small"
-            type="primary"
-          ></Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openDelete: true, selected: record })
-            }
-            size="small"
-            type="primary"
-            danger
-          ></Button>
+          {hasAccess("update") && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openUpsert: true, selected: record })
+              }
+              size="small"
+              type="primary"
+            ></Button>
+          )}
+          {hasAccess("delete") && (
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openDelete: true, selected: record })
+              }
+              size="small"
+              type="primary"
+              danger
+            ></Button>
+          )}
         </div>
       ),
     },
@@ -639,16 +657,18 @@ function TableProduk({
 
   return (
     <div>
-      <Button
-        icon={<PlusCircleFilled />}
-        size="small"
-        type="primary"
-        onClick={() =>
-          setUpsert({ ...upsert, openUpsert: true, selected: undefined })
-        }
-      >
-        Add Produk
-      </Button>
+      {hasAccess("write") && (
+        <Button
+          icon={<PlusCircleFilled />}
+          size="small"
+          type="primary"
+          onClick={() =>
+            setUpsert({ ...upsert, openUpsert: true, selected: undefined })
+          }
+        >
+          Add Produk
+        </Button>
+      )}
       <Table
         columns={columns}
         dataSource={record.ProdukPembiayaan}

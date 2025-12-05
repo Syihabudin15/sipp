@@ -2,6 +2,7 @@
 
 import { FormInput } from "@/components";
 import { IActionTable, IUnit, IPageProps } from "@/components/IInterfaces";
+import { useAccess } from "@/lib/Permission";
 import {
   DeleteOutlined,
   EditOutlined,
@@ -30,6 +31,7 @@ export default function Page() {
   });
   const [loading, setLoading] = useState(false);
   const { modal } = App.useApp();
+  const { hasAccess } = useAccess("/configs/unit");
 
   const getData = async () => {
     setLoading(true);
@@ -101,23 +103,27 @@ export default function Page() {
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button
-            icon={<EditOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openUpsert: true, selected: record })
-            }
-            size="small"
-            type="primary"
-          ></Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openDelete: true, selected: record })
-            }
-            size="small"
-            type="primary"
-            danger
-          ></Button>
+          {hasAccess("update") && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openUpsert: true, selected: record })
+              }
+              size="small"
+              type="primary"
+            ></Button>
+          )}
+          {hasAccess("delete") && (
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openDelete: true, selected: record })
+              }
+              size="small"
+              type="primary"
+              danger
+            ></Button>
+          )}
         </div>
       ),
     },
@@ -181,6 +187,7 @@ export default function Page() {
                 areaId={record.id}
                 getData={getData}
                 modal={modal}
+                hasAccess={hasAccess}
               />
             );
           },
@@ -380,11 +387,13 @@ function TableCabang({
   areaId,
   getData,
   modal,
+  hasAccess,
 }: {
   record: Cabang[];
   areaId: string;
   getData: Function;
   modal: HookAPI;
+  hasAccess: Function;
 }) {
   const [upsert, setUpsert] = useState<IActionTable<Cabang>>({
     openUpsert: false,
@@ -440,23 +449,27 @@ function TableCabang({
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button
-            icon={<EditOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openUpsert: true, selected: record })
-            }
-            size="small"
-            type="primary"
-          ></Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openDelete: true, selected: record })
-            }
-            size="small"
-            type="primary"
-            danger
-          ></Button>
+          {hasAccess("update") && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openUpsert: true, selected: record })
+              }
+              size="small"
+              type="primary"
+            ></Button>
+          )}
+          {hasAccess("delete") && (
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openDelete: true, selected: record })
+              }
+              size="small"
+              type="primary"
+              danger
+            ></Button>
+          )}
         </div>
       ),
     },
@@ -464,16 +477,18 @@ function TableCabang({
 
   return (
     <div>
-      <Button
-        icon={<PlusCircleFilled />}
-        size="small"
-        type="primary"
-        onClick={() =>
-          setUpsert({ ...upsert, openUpsert: true, selected: undefined })
-        }
-      >
-        Add Cabang
-      </Button>
+      {hasAccess("write") && (
+        <Button
+          icon={<PlusCircleFilled />}
+          size="small"
+          type="primary"
+          onClick={() =>
+            setUpsert({ ...upsert, openUpsert: true, selected: undefined })
+          }
+        >
+          Add Cabang
+        </Button>
+      )}
       <Table
         columns={columns}
         dataSource={record}

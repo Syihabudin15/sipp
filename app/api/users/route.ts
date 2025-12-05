@@ -2,6 +2,7 @@ import prisma, { generateUserId, generateUserNIP } from "@/lib/Prisma";
 import { User } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
+import { getSession } from "@/lib/Auth";
 
 export const GET = async (request: NextRequest) => {
   const page = request.nextUrl.searchParams.get("page") || "1";
@@ -9,6 +10,13 @@ export const GET = async (request: NextRequest) => {
   const search = request.nextUrl.searchParams.get("search") || "";
   const roleId = request.nextUrl.searchParams.get("roleId") || "";
   const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  const session = await getSession();
+  if (!session)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
+  const user = await prisma.user.findFirst({ where: { id: session.user.id } });
+  if (!user)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
 
   const find = await prisma.user.findMany({
     where: {
@@ -21,6 +29,7 @@ export const GET = async (request: NextRequest) => {
         ],
       }),
       ...(roleId && { roleId: roleId }),
+      ...(user.sumdanId && { sumdanId: user.sumdanId }),
       status: true,
     },
     skip: skip,
@@ -48,6 +57,7 @@ export const GET = async (request: NextRequest) => {
         ],
       }),
       ...(roleId && { roleId: roleId }),
+      ...(user.sumdanId && { sumdanId: user.sumdanId }),
       status: true,
     },
   });
@@ -83,6 +93,7 @@ export const POST = async (request: NextRequest) => {
       msg: "Berhasil menyimpan data user.",
     });
   } catch (err) {
+    console.log(err);
     return NextResponse.json({
       status: 500,
       msg: "Gagal menyimpan data user. internal server error.",

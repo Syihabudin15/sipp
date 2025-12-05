@@ -7,6 +7,7 @@ import {
   CreditCardOutlined,
   UserOutlined,
   BankFilled,
+  FileDoneOutlined,
 } from "@ant-design/icons";
 
 const PensionCreditDashboard = () => {
@@ -23,7 +24,7 @@ const PensionCreditDashboard = () => {
       style={{
         padding: 5,
         minHeight: 360,
-        background: colorBgContainer,
+        // background: colorBgContainer,
         borderRadius: borderRadiusLG,
       }}
     >
@@ -107,10 +108,10 @@ const PensionCreditDashboard = () => {
             />
             <Divider style={{ margin: "8px 0" }} />
             <Statistic
-              title="Target Bulan Ini"
-              value={520}
+              title="Total Permohonan Bulan Ini"
+              value={`${520} Permohonan`}
               styles={{ content: { color: "#0050b3", fontSize: 14 } }}
-              prefix={<StockOutlined />}
+              prefix={<FileDoneOutlined />}
             />
           </Card>
         </Col>

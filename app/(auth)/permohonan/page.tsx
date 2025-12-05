@@ -2,6 +2,7 @@
 
 import { IActionTable, IDapem, IPageProps } from "@/components/IInterfaces";
 import { IDRFormat } from "@/components/Utils";
+import { useAccess } from "@/lib/Permission";
 import {
   DeleteOutlined,
   DropboxOutlined,
@@ -39,6 +40,7 @@ export default function Page() {
   });
   const { modal } = App.useApp();
   const [loading, setLoading] = useState(false);
+  const { hasAccess } = useAccess("/permohonan");
 
   const getData = async () => {
     setLoading(true);
@@ -169,32 +171,42 @@ export default function Page() {
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Link href={"/permohonan/update/" + record.id}>
+          {hasAccess("update") && (
+            <Link href={"/permohonan/update/" + record.id}>
+              <Button
+                icon={<EditOutlined />}
+                size="small"
+                type="primary"
+              ></Button>
+            </Link>
+          )}
+          {hasAccess("delete") && (
             <Button
-              icon={<EditOutlined />}
+              icon={<DeleteOutlined />}
               size="small"
               type="primary"
-            ></Button>
-          </Link>
-          <Button
-            icon={<DeleteOutlined />}
-            size="small"
-            type="primary"
-            danger
-            onClick={() =>
-              setSelected({ ...selected, openDelete: true, selected: record })
-            }
-          ></Button>
-          <Tooltip title={"Ajukan permohonan kredit ini?"}>
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              size="small"
+              danger
               onClick={() =>
-                setSelected({ ...selected, openUpsert: true, selected: record })
+                setSelected({ ...selected, openDelete: true, selected: record })
               }
             ></Button>
-          </Tooltip>
+          )}
+          {hasAccess("write") && (
+            <Tooltip title={"Ajukan permohonan kredit ini?"}>
+              <Button
+                type="primary"
+                icon={<SendOutlined />}
+                size="small"
+                onClick={() =>
+                  setSelected({
+                    ...selected,
+                    openUpsert: true,
+                    selected: record,
+                  })
+                }
+              ></Button>
+            </Tooltip>
+          )}
         </div>
       ),
     },
@@ -235,6 +247,7 @@ export default function Page() {
         ...selected.selected,
         status_final: "ANTRI",
         verif_status: "PENDING",
+        created_at: new Date(),
       }),
     })
       .then((res) => res.json())
@@ -269,11 +282,13 @@ export default function Page() {
       styles={{ body: { padding: 5 } }}
     >
       <div className="flex justify-between my-1">
-        <Link href={"/permohonan/create"}>
-          <Button size="small" type="primary" icon={<PlusCircleFilled />}>
-            Add New
-          </Button>
-        </Link>
+        {hasAccess("write") && (
+          <Link href={"/permohonan/create"}>
+            <Button size="small" type="primary" icon={<PlusCircleFilled />}>
+              Add New
+            </Button>
+          </Link>
+        )}
         <Input.Search
           size="small"
           style={{ width: 170 }}

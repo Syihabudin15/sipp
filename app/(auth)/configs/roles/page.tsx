@@ -6,6 +6,7 @@ import {
   IPermission,
 } from "@/components/IInterfaces";
 import { menuItems } from "@/components/ILayout";
+import { useAccess } from "@/lib/Permission";
 import {
   DeleteOutlined,
   EditOutlined,
@@ -42,6 +43,7 @@ export default function Page() {
     search: "",
   });
   const [loading, setLoading] = useState(false);
+  const { hasAccess } = useAccess("/configs/roles");
 
   const getData = async () => {
     setLoading(true);
@@ -104,23 +106,27 @@ export default function Page() {
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Button
-            icon={<EditOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openUpsert: true, selected: record })
-            }
-            size="small"
-            type="primary"
-          ></Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              setUpsert({ ...upsert, openDelete: true, selected: record })
-            }
-            size="small"
-            type="primary"
-            danger
-          ></Button>
+          {hasAccess("update") && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openUpsert: true, selected: record })
+              }
+              size="small"
+              type="primary"
+            ></Button>
+          )}
+          {hasAccess("delete") && (
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                setUpsert({ ...upsert, openDelete: true, selected: record })
+              }
+              size="small"
+              type="primary"
+              danger
+            ></Button>
+          )}
         </div>
       ),
     },
@@ -154,16 +160,18 @@ export default function Page() {
       styles={{ body: { padding: 5 } }}
     >
       <div className="flex justify-between my-1">
-        <Button
-          size="small"
-          type="primary"
-          icon={<PlusCircleFilled />}
-          onClick={() =>
-            setUpsert({ ...upsert, openUpsert: true, selected: undefined })
-          }
-        >
-          Add Role
-        </Button>
+        {hasAccess("write") && (
+          <Button
+            size="small"
+            type="primary"
+            icon={<PlusCircleFilled />}
+            onClick={() =>
+              setUpsert({ ...upsert, openUpsert: true, selected: undefined })
+            }
+          >
+            Add Role
+          </Button>
+        )}
         <Input.Search
           size="small"
           style={{ width: 170 }}

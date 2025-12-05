@@ -2,6 +2,7 @@
 
 import { IDapem, IPageProps } from "@/components/IInterfaces";
 import { IDRFormat } from "@/components/Utils";
+import { useAccess } from "@/lib/Permission";
 import {
   ArrowRightOutlined,
   DropboxOutlined,
@@ -10,7 +11,9 @@ import {
 import {
   Button,
   Card,
+  DatePicker,
   Input,
+  Select,
   Table,
   TableProps,
   Tag,
@@ -21,6 +24,7 @@ import moment from "moment";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 const { Paragraph } = Typography;
+const { RangePicker } = DatePicker;
 
 export default function Page() {
   const [pageProps, setPageProps] = useState<IPageProps<IDapem>>({
@@ -29,17 +33,27 @@ export default function Page() {
     total: 0,
     data: [],
     search: "",
+    backdate: "",
+    slik_status: "all",
   });
   const [loading, setLoading] = useState(false);
+  const { hasAccess } = useAccess("/proses/slik");
 
   const getData = async () => {
     setLoading(true);
     const params = new URLSearchParams();
     params.append("page", pageProps.page.toString());
     params.append("limit", pageProps.limit.toString());
-    params.append("slik_status", "all");
     if (pageProps.search) {
       params.append("search", pageProps.search);
+    }
+    if (pageProps.slik_status) {
+      params.append("slik_status", pageProps.slik_status);
+    } else {
+      params.append("slik_status", "all");
+    }
+    if (pageProps.backdate) {
+      params.append("backdate", pageProps.backdate);
     }
     const res = await fetch(`/api/dapem?${params.toString()}`);
     const json = await res.json();
@@ -56,7 +70,13 @@ export default function Page() {
       await getData();
     }, 200);
     return () => clearTimeout(timeout);
-  }, [pageProps.page, pageProps.limit, pageProps.search]);
+  }, [
+    pageProps.page,
+    pageProps.limit,
+    pageProps.search,
+    pageProps.slik_status,
+    pageProps.backdate,
+  ]);
 
   const columns: TableProps<IDapem>["columns"] = [
     {
@@ -165,7 +185,7 @@ export default function Page() {
       title: "Status VERIFIKASI",
       dataIndex: "verif_status",
       key: "verif_status",
-      width: 200,
+      width: 250,
       render: (_, record, i) => (
         <div>
           <p>
@@ -203,7 +223,7 @@ export default function Page() {
       title: "Status SLIK",
       dataIndex: "slik_status",
       key: "slik_status",
-      width: 200,
+      width: 250,
       render: (_, record, i) => (
         <div>
           <p>
@@ -249,18 +269,20 @@ export default function Page() {
       width: 100,
       render: (_, record) => (
         <div className="flex gap-2">
-          <Link href={"/proses/slik/" + record.id}>
-            <Tooltip
-              title={`Proses Data ${record.Debitur.nama_penerima} (${record.nopen})`}
-            >
-              <Button
-                icon={<FormOutlined />}
-                type="primary"
-                size="small"
-                disabled={record.slik_status !== "PENDING"}
-              ></Button>
-            </Tooltip>
-          </Link>
+          {hasAccess("proses") && (
+            <Link href={"/proses/slik/" + record.id}>
+              <Tooltip
+                title={`Proses Data ${record.Debitur.nama_penerima} (${record.nopen})`}
+              >
+                <Button
+                  icon={<FormOutlined />}
+                  type="primary"
+                  size="small"
+                  disabled={record.slik_status !== "PENDING"}
+                ></Button>
+              </Tooltip>
+            </Link>
+          )}
         </div>
       ),
     },
@@ -275,7 +297,26 @@ export default function Page() {
       }
       styles={{ body: { padding: 5 } }}
     >
-      <div className="flex justify-between my-1">
+      <div className="flex justify-between my-1 gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          <RangePicker
+            size="small"
+            onChange={(date, dateStr) =>
+              setPageProps({ ...pageProps, backdate: dateStr })
+            }
+          />
+          <Select
+            size="small"
+            placeholder="Pilih Status..."
+            options={[
+              { label: "PENDING", value: "PENDING" },
+              { label: "SETUJU", value: "SETUJU" },
+              { label: "TOLAK", value: "TOLAK" },
+            ]}
+            onChange={(e) => setPageProps({ ...pageProps, slik_status: e })}
+            allowClear
+          />
+        </div>
         <Input.Search
           size="small"
           style={{ width: 170 }}

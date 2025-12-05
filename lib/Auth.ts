@@ -54,7 +54,8 @@ export async function refreshToken(request: NextRequest) {
 
   const parsed = await decrypt(session);
   const refreshMinutes = Number(process.env.SESSION_REFRESH_MINUTES) || 60 * 24;
-  const thresholdSeconds = Number(process.env.SESSION_THRESHOLD_SECONDS) || 60;
+  const thresholdSeconds =
+    Number(process.env.SESSION_THRESHOLD_SECONDS) || 60 * 60;
 
   // Hitung sisa waktu
   const timeRemaining = new Date(parsed.expires).getTime() - Date.now();

@@ -141,7 +141,7 @@ model ProdukPembiayaan {
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
   sumdanId   String
-  dapems     Dapem[]
+  Dapem      Dapem[]
 }
 
 model JenisPembiayaan {
@@ -295,6 +295,7 @@ model Dapem {
   PenyerahanJaminan   PenyerahanJaminan? @relation(fields: [penyerahanJaminanId], references: [id])
   penyerahanJaminanId String?
   Pelunasan           Pelunasan?
+  Angsuran            Angsuran[]
 }
 
 model Pencairan {
@@ -359,4 +360,16 @@ model Pelunasan {
 
   Dapem   Dapem  @relation(fields: [dapemId], references: [id])
   dapemId String @unique
+}
+
+model Angsuran {
+  id           String    @id
+  ke           Int
+  jadwal_bayar DateTime
+  tgl_bayar    DateTime?
+  pokok        Int
+  margin       Int
+  sisa         Int
+  Dapem        Dapem     @relation(fields: [dapemId], references: [id])
+  dapemId      String
 }

@@ -1,3 +1,4 @@
+import { getSession } from "@/lib/Auth";
 import prisma, { generateSumdanId } from "@/lib/Prisma";
 import { Sumdan } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,11 +9,19 @@ export const GET = async (request: NextRequest) => {
   const search = request.nextUrl.searchParams.get("search") || "";
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
+  const session = await getSession();
+  if (!session)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
+  const user = await prisma.user.findFirst({ where: { id: session.user.id } });
+  if (!user)
+    return NextResponse.json({ data: [], status: 200 }, { status: 200 });
+
   const find = await prisma.sumdan.findMany({
     where: {
       ...(search && {
         OR: [{ name: { contains: search } }, { code: { contains: search } }],
       }),
+      ...(user.sumdanId && { id: user.sumdanId }),
       status: true,
     },
     skip: skip,
@@ -28,6 +37,7 @@ export const GET = async (request: NextRequest) => {
       ...(search && {
         OR: [{ name: { contains: search } }, { code: { contains: search } }],
       }),
+      ...(user.sumdanId && { id: user.sumdanId }),
       status: true,
     },
   });
