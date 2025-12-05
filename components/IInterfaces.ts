@@ -6,6 +6,8 @@ import {
   JenisPembiayaan,
   Keluarga,
   Pencairan,
+  PenyerahanBerkas,
+  PenyerahanJaminan,
   ProdukPembiayaan,
   Role,
   Sumdan,
@@ -15,7 +17,9 @@ import {
 export interface IUser extends User {
   Role: Role;
 }
-
+export interface IRole extends Role {
+  User: User[];
+}
 export interface INotif {
   verif: number;
   slik: number;
@@ -23,6 +27,10 @@ export interface INotif {
   akad: number;
   si: number;
   dropping: number;
+  cpb: number;
+  pb: number;
+  ctbo: number;
+  tbo: number;
 }
 
 export interface IPermission {
@@ -73,4 +81,16 @@ export interface IDapem extends Dapem {
 export interface IPencairan extends Pencairan {
   Dapem: IDapem[];
   Sumdan: Sumdan;
+}
+export interface IPenyerahanBerkas extends PenyerahanBerkas {
+  Dapem: IDapem[];
+  Sumdan: Sumdan;
+}
+export interface IPenyerahanJaminan extends PenyerahanJaminan {
+  Dapem: IDapem[];
+  Sumdan: Sumdan;
+}
+export interface IPemberkasan extends IDapem {
+  PenyerahanBerkas: PenyerahanBerkas | null;
+  PenyerahanJaminan: PenyerahanJaminan | null;
 }

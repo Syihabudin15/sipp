@@ -28,7 +28,7 @@ async function main() {
     update: {},
   });
   const area = await prisma.area.upsert({
-    where: { id: "A-01" },
+    where: { id: "A-001" },
     create: {
       id: "A-001",
       name: "JAWA BARAT",

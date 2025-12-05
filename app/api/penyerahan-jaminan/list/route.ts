@@ -1,7 +1,7 @@
-import { IPencairan } from "@/components/IInterfaces";
+import { IPenyerahanJaminan } from "@/components/IInterfaces";
 import { getSession } from "@/lib/Auth";
 import prisma from "@/lib/Prisma";
-import { EStatusFinal } from "@prisma/client";
+import { EStatusBerkas } from "@prisma/client";
 import moment from "moment";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,8 +10,8 @@ export const GET = async (request: NextRequest) => {
   const limit = request.nextUrl.searchParams.get("limit") || "50";
   const search = request.nextUrl.searchParams.get("search") || "";
   const sumdanId = request.nextUrl.searchParams.get("sumdanId") || "";
-  const pencairan_status =
-    request.nextUrl.searchParams.get("pencairan_status") || "";
+  const jaminan_status =
+    request.nextUrl.searchParams.get("jaminan_status") || "";
   const backdate = request.nextUrl.searchParams.get("backdate");
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -28,7 +28,7 @@ export const GET = async (request: NextRequest) => {
       { status: 200 }
     );
 
-  const find = await prisma.pencairan.findMany({
+  const find = await prisma.penyerahanJaminan.findMany({
     where: {
       ...(search && {
         OR: [
@@ -43,8 +43,8 @@ export const GET = async (request: NextRequest) => {
         ],
       }),
       ...(sumdanId && { sumdanId: sumdanId }),
-      ...(pencairan_status && {
-        pencairan_status: pencairan_status as EStatusFinal,
+      ...(jaminan_status && {
+        jaminan_status: jaminan_status as EStatusBerkas,
       }),
       ...(backdate && {
         created_at: {
@@ -72,7 +72,7 @@ export const GET = async (request: NextRequest) => {
     },
   });
 
-  const total = await prisma.pencairan.count({
+  const total = await prisma.penyerahanJaminan.count({
     where: {
       ...(search && {
         OR: [
@@ -87,8 +87,8 @@ export const GET = async (request: NextRequest) => {
         ],
       }),
       ...(sumdanId && { sumdanId: sumdanId }),
-      ...(pencairan_status && {
-        pencairan_status: pencairan_status as EStatusFinal,
+      ...(jaminan_status && {
+        jaminan_status: jaminan_status as EStatusBerkas,
       }),
       ...(backdate && {
         created_at: {
@@ -109,12 +109,15 @@ export const GET = async (request: NextRequest) => {
 };
 
 export const PUT = async (req: NextRequest) => {
-  const data: IPencairan = await req.json();
+  const data: IPenyerahanJaminan = await req.json();
 
   try {
     const { Dapem, Sumdan, ...saved } = data;
     await prisma.$transaction(async (tx) => {
-      await tx.pencairan.update({ where: { id: data.id }, data: saved });
+      await tx.penyerahanJaminan.update({
+        where: { id: data.id },
+        data: saved,
+      });
       for (const dpm of Dapem) {
         const {
           ProdukPembiayaan,
@@ -129,7 +132,7 @@ export const PUT = async (req: NextRequest) => {
     });
     return NextResponse.json(
       {
-        msg: "Data Pencairan berhasil diperbarui.",
+        msg: "Data Penyerahan Jaminan berhasil diperbarui.",
         status: 201,
       },
       { status: 201 }

@@ -95,7 +95,7 @@ export default function DetailDapem({
         <p className="text-sm text-gray-500 mt-1">
           Nomor Akad:{" "}
           <span className="font-mono font-medium text-indigo-600">
-            {data.id}
+            {data.akad_nomor}
           </span>
         </p>
         <p className="text-sm text-gray-500 mt-1">
@@ -249,14 +249,16 @@ const DataPembiayaan = ({ data }: { data: IDapem }) => {
               )}
               <Tag color={"blue"} style={{ marginLeft: 10 }}>
                 DSR{" "}
-                {(getAngsuran(
-                  data.plafond,
-                  data.tenor,
-                  data.margin + data.margin_sumdan,
-                  data.pembulatan
-                ).angsuran /
-                  data.Debitur.gaji_pensiun) *
-                  100}
+                {(
+                  (getAngsuran(
+                    data.plafond,
+                    data.tenor,
+                    data.margin + data.margin_sumdan,
+                    data.pembulatan
+                  ).angsuran /
+                    data.Debitur.gaji_pensiun) *
+                  100
+                ).toFixed(2)}
                 %
               </Tag>
             </Text>

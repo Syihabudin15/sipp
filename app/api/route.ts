@@ -15,12 +15,14 @@ export const GET = async (req: NextRequest) => {
     prisma.dapem.findMany({
       where: {
         OR: [{ status_final: "TRANSFER" }, { status_final: "LUNAS" }],
+        ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
         status: true,
       },
     }),
     prisma.dapem.findMany({
       where: {
         OR: [{ status_final: "ANTRI" }, { status_final: "PROSES" }],
+        ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
         status: true,
       },
     }),
@@ -28,6 +30,7 @@ export const GET = async (req: NextRequest) => {
       where: {
         status_final: "TRANSFER",
         status: true,
+        ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
         created_at: {
           gte: moment().startOf("month").toDate(),
           lte: moment().endOf("month").toDate(),
@@ -39,6 +42,9 @@ export const GET = async (req: NextRequest) => {
         Dapem: {
           some: {
             OR: [{ status_final: "TRANSFER" }, { status_final: "LUNAS" }],
+            ...(user.sumdanId && {
+              ProdukPembiayaan: { sumdanId: user.sumdanId },
+            }),
             status: true,
           },
         },
@@ -50,6 +56,9 @@ export const GET = async (req: NextRequest) => {
           some: {
             status_final: "TRANSFER",
             status: true,
+            ...(user.sumdanId && {
+              ProdukPembiayaan: { sumdanId: user.sumdanId },
+            }),
             created_at: {
               gte: moment().startOf("month").toDate(),
               lte: moment().endOf("month").toDate(),
@@ -62,12 +71,52 @@ export const GET = async (req: NextRequest) => {
 
   const troles = await prisma.role.findMany({
     where: { status: true },
-    include: { User: { where: { sumdanId: null, status: true } } },
+    include: {
+      User: {
+        where: {
+          ...(user.sumdanId
+            ? {
+                sumdanId: user.sumdanId,
+              }
+            : { sumdanId: null }),
+          status: true,
+        },
+      },
+    },
   });
   const roles = troles.filter((tr) => tr.User.length !== 0);
   const angsurans = await prisma.angsuran.findMany({
-    where: { Dapem: { status_final: "TRANSFER" } },
+    where: {
+      Dapem: {
+        status_final: "TRANSFER",
+        ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
+      },
+    },
   });
+  const [pelunasan, pelunasanreq] = await prisma.$transaction([
+    prisma.pelunasan.findMany({
+      where: {
+        status: true,
+        status_final: "LUNAS",
+        ...(user.sumdanId && {
+          Dapem: {
+            ProdukPembiayaan: { sumdanId: user.sumdanId },
+          },
+        }),
+      },
+    }),
+    prisma.pelunasan.findMany({
+      where: {
+        status: true,
+        OR: [{ status_final: "ANTRI" }, { status_final: "PROSES" }],
+        ...(user.sumdanId && {
+          Dapem: {
+            ProdukPembiayaan: { sumdanId: user.sumdanId },
+          },
+        }),
+      },
+    }),
+  ]);
 
   return NextResponse.json({
     kyd: kydd.reduce((acc, curr) => acc + curr.plafond, 0),
@@ -88,6 +137,7 @@ export const GET = async (req: NextRequest) => {
       (p) => p.slik_status === "PENDING" || p.approv_status === "PENDING"
     ),
     akad: kypp.filter((p) => p.status_final === "PROSES"),
-    // pelunasan
+    pelunasan,
+    pelunasanreq,
   });
 };

@@ -2,11 +2,11 @@
 import {
   Badge,
   Button,
+  Dropdown,
   Layout,
   Menu,
   Modal,
   theme,
-  Tooltip,
   Typography,
 } from "antd";
 import {
@@ -28,7 +28,6 @@ import {
   PrinterOutlined,
   PayCircleOutlined,
   FolderOpenOutlined,
-  FolderOutlined,
   FolderAddOutlined,
   FolderViewOutlined,
   SafetyCertificateOutlined,
@@ -200,6 +199,10 @@ export const DashboardLayout = ({
     akad: 0,
     si: 0,
     dropping: 0,
+    cpb: 0,
+    pb: 0,
+    ctbo: 0,
+    tbo: 0,
   });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -284,56 +287,98 @@ export const DashboardLayout = ({
               : process.env.NEXT_PUBLIC_APP_SHORTNAME || "SIPP"}
           </Title>
           <div className="pr-4 flex gap-4 items-center">
-            {window && window.innerWidth > 600 && (
-              <div className="flex items-center gap-2">
-                <NotifItem
-                  count={notif.verif}
-                  name="VERIF"
-                  link="/proses/verif"
-                />
-                <NotifItem count={notif.slik} name="SLIK" link="/proses/slik" />
-                <NotifItem
-                  count={notif.approv}
-                  name="APPROV"
-                  link="/proses/approv"
-                />
-                <NotifItem count={notif.akad} name="AKAD" link="/berkas" />
-                <NotifItem count={notif.si} name="SI" link="/pencairan/cetak" />
-                <NotifItem
-                  count={notif.dropping}
-                  name="DROPPING"
-                  link="/pencairan/list"
-                />
-              </div>
-            )}
-            {window && window.innerWidth < 600 && (
-              <Tooltip
-                title={
-                  <div>
-                    <p>VERIFIKASI : {notif.verif}</p>
-                    <p>SLIK : {notif.slik}</p>
-                    <p>APPROVAL : {notif.approv}</p>
-                    <p>AKAD : {notif.akad}</p>
-                    <p>SI : {notif.si}</p>
-                    <p>DROPPING : {notif.dropping}</p>
-                  </div>
-                }
-              >
-                <Badge
-                  count={
-                    notif.verif +
-                    notif.slik +
-                    notif.approv +
-                    notif.akad +
-                    notif.si +
-                    notif.dropping
-                  }
-                  showZero
+            <Dropdown
+              trigger={["hover"]}
+              placement="bottomRight"
+              popupRender={() => (
+                <div
+                  style={{
+                    width: 300,
+                    maxHeight: 300,
+                    overflowY: "auto",
+                    padding: 10,
+                    background: "white",
+                    borderRadius: 8,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  }}
+                  className="flex flex-wrap gap-2 items-center justify-center"
                 >
-                  <Button icon={<BellOutlined />}></Button>
-                </Badge>
-              </Tooltip>
-            )}
+                  <NotifItem
+                    name="VERIFIKASI"
+                    count={notif.verif}
+                    link="/proses/verif"
+                  />
+                  <NotifItem
+                    name="SLIK"
+                    count={notif.slik}
+                    link="/proses/slik"
+                  />
+                  <NotifItem
+                    name="APPROVAL"
+                    count={notif.approv}
+                    link="/proses/approv"
+                  />
+                  <NotifItem
+                    name="AKAD"
+                    count={notif.akad}
+                    link="/monitoring"
+                  />
+                  <NotifItem
+                    name="CETAK SI"
+                    count={notif.si}
+                    link="/pencairan/cetak"
+                  />
+                  <NotifItem
+                    name="DROPPING"
+                    count={notif.dropping}
+                    link="/pencairan/list"
+                  />
+                  <NotifItem
+                    name="CETAK PB"
+                    count={notif.cpb}
+                    link="/penyerahan-berkas/cetak"
+                  />
+                  <NotifItem
+                    name="PB"
+                    count={notif.pb}
+                    link="/penyerahan-berkas/list"
+                  />
+                  <NotifItem
+                    name="CETAK TBO"
+                    count={notif.ctbo}
+                    link="/penyerahan-jaminan/cetak"
+                  />
+                  <NotifItem
+                    name="TBO"
+                    count={notif.tbo}
+                    link="/penyerahan-jaminan/list"
+                  />
+                </div>
+              )} // ⬅️ AntD v5 way
+            >
+              <Button
+                icon={
+                  <Badge
+                    count={
+                      notif.verif +
+                      notif.slik +
+                      notif.approv +
+                      notif.akad +
+                      notif.si +
+                      notif.dropping +
+                      notif.cpb +
+                      notif.pb +
+                      notif.ctbo +
+                      notif.tbo
+                    }
+                    size="small"
+                    showZero
+                  >
+                    <BellOutlined style={{ cursor: "pointer" }} />
+                  </Badge>
+                }
+              ></Button>
+            </Dropdown>
             <p>{user?.fullname}</p>
             <Button
               icon={<LogoutOutlined />}

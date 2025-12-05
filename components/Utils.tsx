@@ -293,11 +293,10 @@ export const NotifItem = ({
 }) => {
   return (
     <Link href={link}>
-      <Badge count={count} showZero>
-        <div className="border px-2 py-1 text-xs rounded bg-gray-50">
-          {name}
-        </div>
-      </Badge>
+      <div className="border px-2 py-1 text-xs rounded flex justify-between gap-2 hover:bg-gray-200">
+        <span className="text-gray-700">{name}</span>
+        <span className="text-red-500">{count}</span>
+      </div>
     </Link>
   );
 };

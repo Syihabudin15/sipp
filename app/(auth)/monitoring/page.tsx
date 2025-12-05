@@ -2,7 +2,7 @@
 
 import { FormInput, PDFAkad } from "@/components";
 import { IActionTable, IDapem, IPageProps } from "@/components/IInterfaces";
-import { IDRFormat } from "@/components/Utils";
+import { getAngsuran, IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
 import {
   ArrowRightOutlined,
@@ -173,6 +173,44 @@ export default function Page() {
       },
     },
     {
+      title: "Angsuran",
+      dataIndex: "angsuran",
+      key: "angsuran",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>
+              Total :{" "}
+              <Tag color={"blue"}>
+                {IDRFormat(
+                  getAngsuran(
+                    record.plafond,
+                    record.tenor,
+                    record.margin + record.margin_sumdan,
+                    record.pembulatan
+                  ).angsuran
+                )}
+              </Tag>
+            </p>
+            <p>
+              Sumdan :{" "}
+              <Tag color={"blue"}>
+                {" "}
+                {IDRFormat(
+                  getAngsuran(
+                    record.plafond,
+                    record.tenor,
+                    record.margin_sumdan,
+                    record.pembulatan
+                  ).angsuran
+                )}
+              </Tag>
+            </p>
+          </div>
+        );
+      },
+    },
+    {
       title: "Produk Pembiayaan",
       dataIndex: "produk",
       key: "produk",
@@ -204,7 +242,7 @@ export default function Page() {
             <p>
               Mutasi <Tag color={"red"}>{record.mutasi_from}</Tag>{" "}
               <ArrowRightOutlined />{" "}
-              <Tag color={"success"}>{record.mutasi_ke}</Tag>
+              <Tag color={"blue"}>{record.mutasi_ke}</Tag>
             </p>
           </div>
         );
@@ -344,7 +382,7 @@ export default function Page() {
       title: "Status DROPPING",
       dataIndex: "status_final",
       key: "status_final",
-      width: 180,
+      width: 200,
       render: (_, record, i) => (
         <div className="">
           <p>
@@ -366,7 +404,7 @@ export default function Page() {
               {record.status_final}
             </Tag>
           </p>
-          <p>
+          <p className="text-xs">
             Tanggal:{" "}
             {record.final_at
               ? moment(record.final_at).format("DD-MM-YYYY HH:mm")

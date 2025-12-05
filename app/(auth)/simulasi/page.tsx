@@ -729,6 +729,7 @@ const defaultDapem: IDapem = {
   c_pelunasan: 0,
   pembulatan: 0,
   berkas_status: "CABANG",
+  jaminan_status: "CABANG",
   akad_nomor: null,
   akad_date: null,
 

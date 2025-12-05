@@ -232,7 +232,7 @@ export default function Page() {
       render: (_, record) => (
         <div className="flex gap-2">
           {hasAccess("proses") && (
-            <Link href={"/proses/approv/" + record.id}>
+            <Link href={"/proses/verif/" + record.id}>
               <Tooltip
                 title={`Proses Data ${record.Debitur.nama_penerima} (${record.nopen})`}
               >

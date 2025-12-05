@@ -1,4 +1,4 @@
-import { IPencairan } from "@/components/IInterfaces";
+import { IPenyerahanBerkas } from "@/components/IInterfaces";
 import prisma from "@/lib/Prisma";
 import moment from "moment";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,10 +15,9 @@ export const GET = async (request: NextRequest) => {
         include: {
           Dapem: {
             where: {
-              pencairanId: null,
+              penyerahanBerkasId: null,
               status: true,
-              status_final: "PROSES",
-              file_akad: { not: null },
+              status_final: "TRANSFER",
             },
             include: {
               ProdukPembiayaan: { include: { Sumdan: true } },
@@ -49,22 +48,24 @@ export const GET = async (request: NextRequest) => {
 };
 
 export const POST = async (req: NextRequest) => {
-  const data: IPencairan = await req.json();
+  const data: IPenyerahanBerkas = await req.json();
   try {
     const { Sumdan, Dapem, ...saved } = data;
     await prisma.$transaction(async (tx) => {
-      const pencairan = await tx.pencairan.create({ data: saved });
+      const penyerahanBerkas = await tx.penyerahanBerkas.create({
+        data: saved,
+      });
       for (const dpm of Dapem) {
         await tx.dapem.update({
           where: { id: dpm.id },
-          data: { pencairanId: pencairan.id },
+          data: { penyerahanBerkasId: penyerahanBerkas.id },
         });
       }
     });
 
     return NextResponse.json(
       {
-        msg: "Data SI Pencairan berhasil dicetak. mohon cek di menu List Pencairan",
+        msg: "Data Penyerahan Berkas berhasil dicetak. mohon cek di menu List Penyerahan Berkas",
         status: 201,
       },
       { status: 201 }
@@ -80,7 +81,7 @@ export const POST = async (req: NextRequest) => {
 
 export const PATCH = async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id") || "id";
-  const count = await prisma.pencairan.count({});
+  const count = await prisma.penyerahanBerkas.count({});
   const sumdan = await prisma.sumdan.findFirst({ where: { id } });
   if (!sumdan)
     return NextResponse.json(
@@ -88,7 +89,7 @@ export const PATCH = async (req: NextRequest) => {
       { status: 400 }
     );
 
-  const nomor = `SI${String(count + 1).padStart(4, "0")}/${
+  const nomor = `PB${String(count + 1).padStart(4, "0")}/${
     process.env.NEXT_PUBLIC_APP_SHORTNAME
   }-${sumdan.code.replace("BPR", "").replace(" ", "")}/${moment().format(
     "MMYYYY"

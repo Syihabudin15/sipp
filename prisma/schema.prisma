@@ -259,6 +259,7 @@ model Dapem {
   penggunaan       String?
   pembulatan       Int
   berkas_status    EStatusBerkas @default(CABANG)
+  jaminan_status   EStatusBerkas @default(CABANG)
   akad_nomor       String?
   akad_date        DateTime?
 
@@ -353,6 +354,7 @@ model Pelunasan {
   alasan         String
   keterangan     String?
   status_jaminan EStatusBerkas @default(SUMDAN)
+  status_final   EStatusFinal  @default(ANTRI)
 
   status     Boolean  @default(true)
   created_at DateTime @default(now())

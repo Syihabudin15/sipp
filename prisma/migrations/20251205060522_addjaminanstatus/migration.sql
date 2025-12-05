@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `dapem` ADD COLUMN `jaminan_status` ENUM('CABANG', 'SENDING', 'SUMDAN', 'PUSAT') NOT NULL DEFAULT 'CABANG';

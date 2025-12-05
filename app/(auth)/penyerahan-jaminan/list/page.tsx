@@ -6,6 +6,7 @@ import {
   IDapem,
   IPageProps,
   IPencairan,
+  IPenyerahanJaminan,
 } from "@/components/IInterfaces";
 import { IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
@@ -14,6 +15,7 @@ import {
   FormOutlined,
   PayCircleOutlined,
   PrinterOutlined,
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import { Sumdan } from "@prisma/client";
 import {
@@ -34,7 +36,7 @@ import { useEffect, useState } from "react";
 const { RangePicker } = DatePicker;
 
 export default function Page() {
-  const [pageProps, setPageProps] = useState<IPageProps<IPencairan>>({
+  const [pageProps, setPageProps] = useState<IPageProps<IPenyerahanJaminan>>({
     page: 1,
     limit: 50,
     data: [],
@@ -42,16 +44,16 @@ export default function Page() {
     search: "",
     sumdanId: "",
     backdate: "",
-    pencairan_status: "",
+    jaminan_status: "",
   });
   const [loading, setLoading] = useState(false);
   const [sumdans, setSumdans] = useState<Sumdan[]>([]);
-  const [action, setAction] = useState<IActionTable<IPencairan>>({
+  const [action, setAction] = useState<IActionTable<IPenyerahanJaminan>>({
     openUpsert: false,
     openDelete: false,
     selected: undefined,
   });
-  const { hasAccess } = useAccess("/pencairan/list");
+  const { hasAccess } = useAccess("/penyerahan-jaminan/list");
   const { modal } = App.useApp();
 
   const getData = async () => {
@@ -68,10 +70,12 @@ export default function Page() {
     if (pageProps.backdate) {
       params.append("backdate", pageProps.backdate);
     }
-    if (pageProps.pencairan_status) {
-      params.append("pencairan_status", pageProps.pencairan_status);
+    if (pageProps.jaminan_status) {
+      params.append("jaminan_status", pageProps.jaminan_status);
     }
-    const res = await fetch(`/api/pencairan?${params.toString()}`);
+    const res = await fetch(
+      `/api/penyerahan-jaminan/list?${params.toString()}`
+    );
     const json = await res.json();
     setPageProps((prev) => ({
       ...prev,
@@ -92,7 +96,7 @@ export default function Page() {
     pageProps.search,
     pageProps.sumdanId,
     pageProps.backdate,
-    pageProps.pencairan_status,
+    pageProps.jaminan_status,
   ]);
 
   useEffect(() => {
@@ -103,14 +107,14 @@ export default function Page() {
     })();
   }, []);
 
-  const columnPencairan: TableProps<IPencairan>["columns"] = [
+  const columnPencairan: TableProps<IPenyerahanJaminan>["columns"] = [
     {
       title: "Sumber Dana",
       key: "sumdan",
       dataIndex: ["Sumdan", "name"],
     },
     {
-      title: "Nomor SI",
+      title: "Nomor TBO",
       key: "id",
       dataIndex: "id",
     },
@@ -147,59 +151,25 @@ export default function Page() {
       },
     },
     {
-      title: "Adm Sumdan & Rekening",
-      key: "adm",
-      dataIndex: "adm",
-      render(value, record, index) {
-        const adm = record.Dapem.reduce(
-          (acc, curr) => acc + curr.plafond * (curr.c_adm_sumdan / 100),
-          0
-        );
-        const rek = record.Dapem.reduce(
-          (acc, curr) => acc + curr.c_rekening,
-          0
-        );
-        return (
-          <div>
-            <p>
-              Adm : <Tag color={"blue"}>{IDRFormat(adm)}</Tag>
-            </p>
-            <p>
-              Rekening : <Tag color={"blue"}>{IDRFormat(rek)}</Tag>
-            </p>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Status DROPPING",
-      dataIndex: "pencairan_status",
-      key: "pencairan_status",
-      width: 180,
+      title: "Status Penerimaan",
+      dataIndex: "berkas_status",
+      key: "berkas_status",
+      width: 200,
       render: (_, record, i) => (
         <div className="">
           <p>
             Status:{" "}
             <Tag
-              color={
-                record.pencairan_status === "TRANSFER"
-                  ? "green"
-                  : record.pencairan_status === "DRAFT"
-                  ? "blue"
-                  : record.pencairan_status === "ANTRI"
-                  ? "orange"
-                  : record.pencairan_status === "PROSES"
-                  ? "blue"
-                  : "red"
-              }
+              color={record.jaminan_status === "SENDING" ? "blue" : "green"}
               variant="solid"
             >
-              {record.pencairan_status}
+              {record.jaminan_status}
             </Tag>
           </p>
-          <p>
-            {record.pencairan_date
-              ? moment(record.pencairan_date).format("DD-MM-YYYY HH:mm")
+          <p className="opacity-70 italic text-xs">
+            Tgl:{" "}
+            {record.jaminan_date
+              ? moment(record.jaminan_date).format("DD-MM-YYYY HH:mm")
               : ""}
           </p>
         </div>
@@ -265,7 +235,7 @@ export default function Page() {
       return;
     }
     setLoading(true);
-    await fetch("/api/pencairan", {
+    await fetch("/api/penyerahan-jaminan/list", {
       method: "PUT",
       body: JSON.stringify(action.selected),
     })
@@ -290,7 +260,7 @@ export default function Page() {
     <Card
       title={
         <div className="flex gap-2 font-bold text-xl">
-          <PayCircleOutlined /> Permohonan Pencairan
+          <SafetyCertificateOutlined /> Penyerahan Jaminan
         </div>
       }
       styles={{ body: { padding: 5 } }}
@@ -307,13 +277,10 @@ export default function Page() {
             size="small"
             placeholder="Pilih Status..."
             options={[
-              { label: "ANTRI", value: "ANTRI" },
-              { label: "PROSES", value: "PROSES" },
-              { label: "TRANSFER", value: "TRANSFER" },
+              { label: "SENDING", value: "SENDING" },
+              { label: "SUMDAN", value: "SUMDAN" },
             ]}
-            onChange={(e) =>
-              setPageProps({ ...pageProps, pencairan_status: e })
-            }
+            onChange={(e) => setPageProps({ ...pageProps, jaminan_status: e })}
             allowClear
           />
           {hasAccess("update") && (
@@ -369,7 +336,7 @@ export default function Page() {
           onCancel={() =>
             setAction({ ...action, openUpsert: false, selected: undefined })
           }
-          title={"Data Pencairan " + action.selected.id}
+          title={"Data TBO " + action.selected.id}
           key={action.selected.id || "created"}
           okButtonProps={{ loading: loading, onClick: () => handleSubmit() }}
         >
@@ -377,7 +344,7 @@ export default function Page() {
             <>
               <FormInput
                 data={{
-                  label: "Tanggal SI",
+                  label: "Tanggal Penyerahan",
                   type: "date",
                   required: true,
                   value: moment(action.selected.created_at).format(
@@ -391,13 +358,13 @@ export default function Page() {
                         created_at: !isNaN(new Date(e).getTime())
                           ? moment(e).toDate()
                           : new Date(),
-                      } as IPencairan,
+                      } as IPenyerahanJaminan,
                     }),
                 }}
               />
               <FormInput
                 data={{
-                  label: "Berkas SI",
+                  label: "Berkas PB",
                   type: "upload",
                   required: true,
                   value: action.selected.file_si,
@@ -409,10 +376,13 @@ export default function Page() {
                         ...action.selected,
                         file_si: e,
                         ...(e &&
-                          action.selected?.pencairan_status !== "TRANSFER" && {
-                            pencairan_status: "PROSES",
+                          action.selected?.jaminan_status !== "SUMDAN" && {
+                            ["Dapem"]: action.selected?.Dapem.map((d) => ({
+                              ...d,
+                              jaminan_status: "SENDING",
+                            })),
                           }),
-                      } as IPencairan,
+                      } as IPenyerahanJaminan,
                     }),
                 }}
               />
@@ -422,32 +392,31 @@ export default function Page() {
             <>
               <FormInput
                 data={{
-                  label: "Status Dropping",
+                  label: "Status Penerimaan",
                   type: "select",
                   required: true,
-                  disabled: action.selected.pencairan_status === "TRANSFER",
-                  value: action.selected.pencairan_status,
+                  disabled: action.selected.jaminan_status === "SUMDAN",
+                  value: action.selected.jaminan_status,
                   onChange: (e: string) =>
                     setAction({
                       ...action,
                       selected: {
                         ...action.selected,
-                        pencairan_status: e,
-                        ...(e === "TRANSFER" && {
-                          ["pencairan_date"]: new Date(),
+                        jaminan_status: e,
+                        ...(e === "SUMDAN" && {
+                          ["jaminan_date"]: new Date(),
                         }),
-                        ...(e === "TRANSFER" && {
+                        ...(e === "SUMDAN" && {
                           ["Dapem"]: action.selected?.Dapem.map((d) => ({
                             ...d,
-                            status_final: "TRANSFER",
-                            final_at: new Date(),
+                            jaminan_status: "SUMDAN",
                           })),
                         }),
-                      } as IPencairan,
+                      } as IPenyerahanJaminan,
                     }),
                   options: [
-                    { label: "TRANSFER", value: "TRANSFER" },
-                    { label: "ANTRI", value: "ANTRI" },
+                    { label: "DITERIMA", value: "SUMDAN" },
+                    { label: "SENDING", value: "SENDING" },
                   ],
                 }}
               />
@@ -464,7 +433,7 @@ export default function Page() {
                       selected: {
                         ...action.selected,
                         file_proof: e,
-                      } as IPencairan,
+                      } as IPenyerahanJaminan,
                     }),
                 }}
               />
@@ -522,22 +491,16 @@ const columnDapem: TableProps<IDapem>["columns"] = [
     },
   },
   {
-    title: "Adm Sumdan & Rekening",
-    key: "admsumdan",
-    dataIndex: "admsumdan",
+    title: "Tgl TBO",
+    key: "tbo",
+    dataIndex: "tbo",
     render(value, record, index) {
       return (
-        <div>
-          <p>
-            Adm :{" "}
-            <Tag color={"blue"}>
-              {IDRFormat(record.plafond * (record.c_adm_sumdan / 100))}
-            </Tag>
-          </p>
-          <p>
-            Rekening : <Tag color={"blue"}>{IDRFormat(record.c_rekening)}</Tag>
-          </p>
-        </div>
+        <>
+          {moment(record.created_at)
+            .add(record.tbo, "month")
+            .format("DD/MM/YYYY")}
+        </>
       );
     },
   },

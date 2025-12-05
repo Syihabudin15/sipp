@@ -25,7 +25,6 @@ export default function Page() {
         } else {
           setErr(res.msg);
         }
-        setLoading(false);
       })
       .catch((err) => {
         console.log(err);

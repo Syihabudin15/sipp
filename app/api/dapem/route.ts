@@ -1,7 +1,7 @@
 import { IDapem } from "@/components/IInterfaces";
 import { getSession } from "@/lib/Auth";
 import prisma, { generateDapemId } from "@/lib/Prisma";
-import { EStatusDapem, EStatusFinal } from "@prisma/client";
+import { EStatusBerkas, EStatusDapem, EStatusFinal } from "@prisma/client";
 import moment from "moment";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,6 +16,10 @@ export const GET = async (request: NextRequest) => {
   const jenisPembiayaanId =
     request.nextUrl.searchParams.get("jenisPembiayaanId");
   const sumdanId = request.nextUrl.searchParams.get("sumdanId");
+  const berkas_status = request.nextUrl.searchParams.get("berkas_status");
+  const jaminan_status = request.nextUrl.searchParams.get("jaminan_status");
+  const pelunasan_status = request.nextUrl.searchParams.get("pelunasan_status");
+  const mutasi_status = request.nextUrl.searchParams.get("mutasi_status");
   const backdate = request.nextUrl.searchParams.get("backdate");
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -57,6 +61,14 @@ export const GET = async (request: NextRequest) => {
         : {}),
       ...(jenisPembiayaanId && { jenisPembiayaanId: jenisPembiayaanId }),
       ...(sumdanId && { ProdukPembiayaan: { sumdanId: sumdanId } }),
+      ...(berkas_status && { berkas_status: berkas_status as EStatusBerkas }),
+      ...(jaminan_status && {
+        jaminan_status: jaminan_status as EStatusBerkas,
+      }),
+      ...(mutasi_status && { mutasi_status: mutasi_status as EStatusDapem }),
+      ...(pelunasan_status && {
+        pelunasan_status: pelunasan_status as EStatusDapem,
+      }),
       ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
       ...(backdate && {
         created_at: {
@@ -85,6 +97,8 @@ export const GET = async (request: NextRequest) => {
           },
         },
       },
+      PenyerahanBerkas: true,
+      PenyerahanJaminan: true,
     },
   });
 
@@ -119,6 +133,14 @@ export const GET = async (request: NextRequest) => {
         : {}),
       ...(jenisPembiayaanId && { jenisPembiayaanId: jenisPembiayaanId }),
       ...(sumdanId && { ProdukPembiayaan: { sumdanId: sumdanId } }),
+      ...(berkas_status && { berkas_status: berkas_status as EStatusBerkas }),
+      ...(jaminan_status && {
+        jaminan_status: jaminan_status as EStatusBerkas,
+      }),
+      ...(mutasi_status && { mutasi_status: mutasi_status as EStatusDapem }),
+      ...(pelunasan_status && {
+        pelunasan_status: pelunasan_status as EStatusDapem,
+      }),
       ...(user.sumdanId && { ProdukPembiayaan: { sumdanId: user.sumdanId } }),
       ...(backdate && {
         created_at: {
