@@ -38,6 +38,7 @@ export const GET = async (request: NextRequest) => {
             { nama_penerima: { contains: search } },
             { nopen: { contains: search } },
             { no_skep: { contains: search } },
+            { nama_skep: { contains: search } },
           ],
         },
       }),
@@ -99,6 +100,8 @@ export const GET = async (request: NextRequest) => {
       },
       PenyerahanBerkas: true,
       PenyerahanJaminan: true,
+      Pelunasan: true,
+      Angsuran: true,
     },
   });
 
@@ -110,6 +113,7 @@ export const GET = async (request: NextRequest) => {
             { nama_penerima: { contains: search } },
             { nopen: { contains: search } },
             { no_skep: { contains: search } },
+            { nama_skep: { contains: search } },
           ],
         },
       }),
@@ -166,7 +170,7 @@ export const POST = async (request: NextRequest) => {
   }
   try {
     await prisma.$transaction(async (tx) => {
-      const { Keluarga, ...deb } = data.Debitur;
+      const { Keluarga, Dapem, ...deb } = data.Debitur;
       const {
         id,
         Debitur,
@@ -174,6 +178,10 @@ export const POST = async (request: NextRequest) => {
         CreatedBy,
         ProdukPembiayaan,
         JenisPembiayaan,
+        Angsuran,
+        PenyerahanBerkas,
+        PenyerahanJaminan,
+        Pelunasan,
         ...saveDapem
       } = data;
       const saveDeb = await tx.debitur.upsert({
@@ -210,7 +218,7 @@ export const PUT = async (request: NextRequest) => {
         { status: 404 }
       );
     await prisma.$transaction(async (tx) => {
-      const { Keluarga, ...deb } = data.Debitur;
+      const { Keluarga, Dapem, ...deb } = data.Debitur;
       const {
         id,
         Debitur,
@@ -218,6 +226,10 @@ export const PUT = async (request: NextRequest) => {
         CreatedBy,
         ProdukPembiayaan,
         JenisPembiayaan,
+        Angsuran,
+        PenyerahanBerkas,
+        PenyerahanJaminan,
+        Pelunasan,
         ...saveDapem
       } = data;
       const saveDeb = await tx.debitur.upsert({
@@ -266,7 +278,7 @@ export const DELETE = async (req: NextRequest) => {
 };
 
 export const PATCH = async (req: NextRequest) => {
-  const id = await req.nextUrl.searchParams.get("id");
+  const id = req.nextUrl.searchParams.get("id");
   if (!id)
     return NextResponse.json(
       {
@@ -283,6 +295,7 @@ export const PATCH = async (req: NextRequest) => {
       ProdukPembiayaan: { include: { Sumdan: true } },
       JenisPembiayaan: true,
       CreatedBy: true,
+      Angsuran: true,
       AO: {
         include: {
           Cabang: {

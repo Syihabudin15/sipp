@@ -19,7 +19,12 @@ export const POST = async (req: NextRequest) => {
     );
 
     const arrayBuffer = await file.arrayBuffer();
-    await blockBlobClient.uploadData(arrayBuffer);
+    await blockBlobClient.uploadData(arrayBuffer, {
+      blobHTTPHeaders: {
+        blobContentType: file.type,
+        blobContentDisposition: "inline",
+      },
+    });
 
     return NextResponse.json(
       {
@@ -66,4 +71,30 @@ export const DELETE = async (req: NextRequest) => {
       { status: 500 }
     );
   }
+};
+
+export const GET = async (req: NextRequest) => {
+  const url = req.nextUrl.searchParams.get("url");
+  if (!url)
+    return NextResponse.json({ message: "Belum di upload" }, { status: 400 });
+
+  // Fetch file dari Azure
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    return NextResponse.json(
+      { message: "Failed to fetch file" },
+      { status: 500 }
+    );
+  }
+
+  const blob = await response.arrayBuffer();
+
+  return new NextResponse(blob, {
+    headers: {
+      "Content-Type": "application/pdf", // paksa view
+      "Content-Disposition": `inline; filename="${Date.now()}.pdf"`,
+      "Cache-Control": "public, max-age=0",
+    },
+  });
 };

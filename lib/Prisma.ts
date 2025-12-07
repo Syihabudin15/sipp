@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Angsuran, Dapem, PrismaClient } from "@prisma/client";
 import moment from "moment";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -131,3 +131,73 @@ export async function generateDapemId() {
 
   return newId;
 }
+export async function generatePelunasanId() {
+  const prefix = `PAID-`;
+  const padLength = 5; // jumlah digit angka
+
+  // Ambil record terakhir berdasarkan ID (urut desc)
+  const lastRecord = await prisma.pelunasan.count({});
+
+  // Format ulang dengan leading zero
+  const newId = `${prefix}${String(lastRecord + 1).padStart(padLength, "0")}`;
+
+  return newId;
+}
+
+export async function generateTableAngsuran(dapem: Dapem) {
+  const prefix = `${dapem.id}INST`;
+  const padLength = 3; // jumlah digit angka
+
+  let angsurans: Angsuran[] = [];
+
+  const angsuran = getAngsuran(
+    dapem.plafond,
+    dapem.tenor,
+    dapem.margin + dapem.margin_sumdan,
+    dapem.pembulatan
+  ).angsuran;
+  let sisa = dapem.plafond;
+
+  for (let i = 1; i <= dapem.tenor; i++) {
+    const newId = `${prefix}${String(i).padStart(padLength, "0")}`;
+    const bungaBulan = Math.round(
+      sisa * ((dapem.margin + dapem.margin_sumdan) / 12 / 100)
+    );
+    const pokok = angsuran - bungaBulan;
+    sisa -= pokok;
+
+    if (sisa < 0) sisa = 0;
+
+    angsurans.push({
+      id: newId,
+      ke: i,
+      tgl_bayar: i <= dapem.c_blokir ? moment(dapem.akad_date).toDate() : null,
+      jadwal_bayar: moment(dapem.akad_date).add(i, "month").toDate(),
+      pokok: pokok,
+      margin: bungaBulan,
+      sisa: sisa,
+      dapemId: dapem.id,
+    });
+  }
+  return angsurans;
+}
+
+export const getAngsuran = (
+  plafond: number,
+  tenor: number,
+  bunga: number,
+  rounded: number
+) => {
+  const r = bunga / 12 / 100;
+
+  const angsuran =
+    (plafond * (r * Math.pow(1 + r, tenor))) / (Math.pow(1 + r, tenor) - 1);
+  const pokok = plafond / tenor;
+  const margin = angsuran - pokok;
+
+  return {
+    angsuran: Math.ceil(angsuran / rounded) * rounded,
+    pokok,
+    margin,
+  };
+};

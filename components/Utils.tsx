@@ -1,12 +1,22 @@
 "use client";
 
 import { CloudUploadOutlined, DeleteOutlined } from "@ant-design/icons";
-import { Badge, Button, Input, Select, Upload, UploadProps } from "antd";
+import {
+  Badge,
+  Button,
+  Input,
+  Modal,
+  Select,
+  Tabs,
+  Upload,
+  UploadProps,
+} from "antd";
 import moment from "moment";
 import { useState } from "react";
 // const { PV } = require("@formulajs/formulajs");
 import { PV } from "@formulajs/formulajs";
 import Link from "next/link";
+import { IViewFiles } from "./IInterfaces";
 
 export interface IFormInput {
   label: string;
@@ -94,6 +104,8 @@ export const FormInput = ({ data }: { data: IFormInput }) => {
           disabled={data.disabled}
           allowClear
           style={{ width: "100%" }}
+          showSearch
+          optionFilterProp="label"
         />
       )}
       {data.type === "password" && (
@@ -111,9 +123,169 @@ export const FormInput = ({ data }: { data: IFormInput }) => {
           accept={data.accept || ""}
           file={data.value}
           setFile={(e: string) => data.onChange && data.onChange(e)}
+          disable={data.disabled}
         />
       )}
     </div>
+  );
+};
+
+const UploadComponents = ({
+  file,
+  setFile,
+  accept,
+  disable,
+}: {
+  file: string | undefined;
+  setFile: Function;
+  accept: string;
+  disable?: boolean;
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+
+  const handleUpload = async (file: any) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`/api/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const resData = await res.json();
+      if (resData.secure_url) {
+        setFile(resData.secure_url);
+      } else {
+        setError(resData.error.message);
+      }
+    } catch (err) {
+      console.log(err);
+      setError("Internal Server Error");
+    }
+  };
+
+  const handleDeleteFiles = async () => {
+    setLoading(true);
+    await fetch("/api/upload", {
+      method: "DELETE",
+      body: JSON.stringify({ publicId: file }),
+    })
+      .then(() => {
+        setFile(undefined);
+      })
+      .catch((err) => {
+        console.log(err);
+        setError("Gagal hapus file!.");
+      });
+    setLoading(false);
+  };
+
+  const props: UploadProps = {
+    beforeUpload: async (file) => {
+      setLoading(true);
+      await handleUpload(file);
+      setLoading(false);
+      return false; // prevent automatic upload
+    },
+    showUploadList: false, // sembunyikan default list
+    accept: accept,
+  };
+
+  return (
+    <div>
+      {file ? (
+        <div className="flex gap-2 items-center">
+          <p>{file.substring(0, 30) + "..."}</p>
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            onClick={() => handleDeleteFiles()}
+            loading={loading}
+            disabled={disable}
+          ></Button>
+        </div>
+      ) : (
+        <div>
+          <Upload {...props}>
+            <Button
+              size="small"
+              icon={<CloudUploadOutlined />}
+              loading={loading}
+              disabled={disable}
+            >
+              Upload Berkas
+            </Button>
+          </Upload>
+          {error && <p className="italic text-red-500">{error}</p>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const NotifItem = ({
+  name,
+  count,
+  link,
+}: {
+  name: string;
+  count: number;
+  link: string;
+}) => {
+  return (
+    <Link href={link}>
+      <div className="border px-2 py-1 text-xs rounded flex justify-between gap-2 hover:bg-gray-200">
+        <span className="text-gray-700">{name}</span>
+        <span className="text-red-500">{count}</span>
+      </div>
+    </Link>
+  );
+};
+
+export const ViewFiles = ({
+  data,
+  setOpen,
+}: {
+  data: IViewFiles;
+  setOpen: Function;
+}) => {
+  const items = data.data.map((d, i) => ({
+    key: d.url + i,
+    label: d.name,
+    children: (
+      <div style={{ width: "100%", height: "76vh" }}>
+        {d.url ? (
+          <iframe
+            width={"100%"}
+            height={"100%"}
+            src={
+              d.name.toLocaleLowerCase().includes("video")
+                ? d.url
+                : `/api/upload?url=${encodeURIComponent(d.url)}`
+            }
+          />
+        ) : (
+          <div className="flex justify-center items-center h-full">
+            <span className="text-gray-500 italic">
+              Tidak ada berkas untuk ditampilkan.
+            </span>
+          </div>
+        )}
+      </div>
+    ),
+  }));
+  return (
+    <Modal
+      open={data.open}
+      onCancel={() => setOpen(false)}
+      style={{ top: 10 }}
+      width={1200}
+      footer={[]}
+    >
+      <Tabs items={items} />
+    </Modal>
   );
 };
 
@@ -189,116 +361,6 @@ export const fileToBase64 = (file: File): Promise<string> => {
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = (error) => reject(error);
   });
-};
-
-const UploadComponents = ({
-  file,
-  setFile,
-  accept,
-}: {
-  file: string | undefined;
-  setFile: Function;
-  accept: string;
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  const handleUpload = async (file: any) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const res = await fetch(`/api/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const resData = await res.json();
-      if (resData.secure_url) {
-        setFile(resData.secure_url);
-      } else {
-        setError(resData.error.message);
-      }
-    } catch (err) {
-      console.log(err);
-      setError("Internal Server Error");
-    }
-  };
-
-  const handleDeleteFiles = async () => {
-    setLoading(true);
-    await fetch("/api/upload", {
-      method: "DELETE",
-      body: JSON.stringify({ publicId: file }),
-    })
-      .then(() => {
-        setFile(undefined);
-      })
-      .catch((err) => {
-        console.log(err);
-        setError("Gagal hapus file!.");
-      });
-    setLoading(false);
-  };
-
-  const props: UploadProps = {
-    beforeUpload: async (file) => {
-      setLoading(true);
-      await handleUpload(file);
-      setLoading(false);
-      return false; // prevent automatic upload
-    },
-    showUploadList: false, // sembunyikan default list
-    accept: accept,
-  };
-
-  return (
-    <div>
-      {file ? (
-        <div className="flex gap-2 items-center">
-          <p>{file.substring(0, 30) + "..."}</p>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            size="small"
-            onClick={() => handleDeleteFiles()}
-            loading={loading}
-          ></Button>
-        </div>
-      ) : (
-        <div>
-          <Upload {...props}>
-            <Button
-              size="small"
-              icon={<CloudUploadOutlined />}
-              loading={loading}
-            >
-              Upload Berkas
-            </Button>
-          </Upload>
-          {error && <p className="italic text-red-500">{error}</p>}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export const NotifItem = ({
-  name,
-  count,
-  link,
-}: {
-  name: string;
-  count: number;
-  link: string;
-}) => {
-  return (
-    <Link href={link}>
-      <div className="border px-2 py-1 text-xs rounded flex justify-between gap-2 hover:bg-gray-200">
-        <span className="text-gray-700">{name}</span>
-        <span className="text-red-500">{count}</span>
-      </div>
-    </Link>
-  );
 };
 
 interface Temp {

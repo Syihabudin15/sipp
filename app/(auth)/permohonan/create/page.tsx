@@ -26,7 +26,14 @@ import {
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { JenisPembiayaan, Keluarga, User } from "@prisma/client";
+import {
+  JenisPembiayaan,
+  Keluarga,
+  Pelunasan,
+  PenyerahanBerkas,
+  PenyerahanJaminan,
+  User,
+} from "@prisma/client";
 import {
   App,
   Button,
@@ -118,8 +125,12 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
           const { data: resData } = res;
           setData({
             ...data,
-            Debitur: resData,
+            Debitur: {
+              ...resData,
+              Keluarga: resData.Keluarga ? resData.Keluarga : [defaultKeluarga],
+            },
             nopen: resData.nopen,
+            mutasi_from: resData.kantor_bayar,
           });
         }
       });
@@ -150,9 +161,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
   };
   useEffect(() => {
     const { year, month, day } = getFullAge(
-      moment(data.Debitur.tgl_lahir_penerima, "DD-MM-YYYY").format(
-        "YYYY-MM-DD"
-      ),
+      data.Debitur.tgl_lahir_penerima,
       moment(data.created_at).format("YYYY-MM-DD")
     );
     const filterProd = produkss.filter(
@@ -187,9 +196,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
       month: monthLunas,
       day: dayLunas,
     } = getFullAge(
-      moment(data.Debitur.tgl_lahir_penerima, "DD-MM-YYYY").format(
-        "YYYY-MM-DD"
-      ),
+      data.Debitur.tgl_lahir_penerima,
       moment(data.created_at).add(data.tenor, "month").format("YYYY-MM-DD")
     );
 
@@ -380,17 +387,14 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                 type: "date",
                 mode: "vertical",
                 required: true,
-                value: moment(
-                  data.Debitur.tgl_lahir_penerima,
-                  "DD-MM-YYYY"
-                ).format("YYYY-MM-DD"),
+                value: data.Debitur.tgl_lahir_penerima,
                 onChange: (e: string) =>
                   setData({
                     ...data,
                     Debitur: {
                       ...data.Debitur,
                       tgl_lahir_penerima: !isNaN(new Date(e).getDate())
-                        ? moment(e).format("DD-MM-YYYY")
+                        ? moment(e).format("YYYY-MM-DD")
                         : "",
                     },
                   }),
@@ -903,7 +907,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                       class: "flex-1",
                       required: true,
                       mode: "vertical",
-                      type: "text",
+                      type: "select",
                       value: k.hubungan,
                       onChange: (e: string) => {
                         const newData = { ...k, hubungan: e };
@@ -919,6 +923,16 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                           },
                         });
                       },
+                      options: [
+                        { label: "PASANGAN", value: "PASANGAN" },
+                        { label: "ANAK KANDUNG", value: "ANAK KANDUNG" },
+                        { label: "ANAK ANGKAT", value: "ANAK ANGKAT" },
+                        { label: "SAUDARA KANDUNG", value: "SAUDARA KANDUNG" },
+                        { label: "SAUDARA ANGKAT", value: "SAUDARA ANGKAT" },
+                        { label: "KEPONAKAN", value: "KEPONAKAN" },
+                        { label: "CUCU", value: "CUCU" },
+                        { label: "LAINNYA", value: "LAINNYA" },
+                      ],
                     }}
                   />
                   <FormInput
@@ -1150,13 +1164,19 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
           <Col xs={12} lg={6}>
             <FormInput
               data={{
-                label: "Golongan Pensiun",
+                label: "Kelompok Pensiun",
                 type: "select",
                 mode: "vertical",
                 required: true,
                 options: [
-                  { label: "TASPEN", value: "TASPEN" },
-                  { label: "ASABRI", value: "ASABRI" },
+                  {
+                    label: "PT. TASPEN (PERSERO)",
+                    value: "PT. TASPEN (PERSERO)",
+                  },
+                  {
+                    label: "PT. ASABRI (PERSERO)",
+                    value: "PT. ASABRI (PERSERO)",
+                  },
                   { label: "LAINNYA", value: "LAINNYA" },
                 ],
                 value: data.Debitur.kelompok_pensiun,
@@ -1223,16 +1243,14 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                 type: "date",
                 mode: "vertical",
                 required: true,
-                value: moment(data.Debitur.tgl_skep, "DD-MM-YYYY").format(
-                  "YYYY-MM-DD"
-                ),
+                value: data.Debitur.tgl_skep,
                 onChange: (e: string) =>
                   setData({
                     ...data,
                     Debitur: {
                       ...data.Debitur,
                       tgl_skep: !isNaN(new Date(e).getDate())
-                        ? moment(e).format("DD-MM-YYYY")
+                        ? moment(e).format("YYYY-MM-DD")
                         : "",
                     },
                   }),
@@ -1246,16 +1264,14 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                 type: "date",
                 mode: "vertical",
                 required: true,
-                value: moment(data.Debitur.tmt_pensiun, "DD-MM-YYYY").format(
-                  "YYYY-MM-DD"
-                ),
+                value: data.Debitur.tmt_pensiun,
                 onChange: (e: string) =>
                   setData({
                     ...data,
                     Debitur: {
                       ...data.Debitur,
                       tmt_pensiun: !isNaN(new Date(e).getDate())
-                        ? moment(e).format("DD-MM-YYYY")
+                        ? moment(e).format("YYYY-MM-DD")
                         : "",
                     },
                   }),
@@ -1313,6 +1329,12 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                       JenisPembiayaan: filter,
                       c_mutasi: filter.c_mutasi,
                       c_blokir: filter.blokir,
+                      ...(filter.status_pelunasan
+                        ? { pelunasan_status: "DRAFT" }
+                        : { pelunasan_status: "SETUJU" }),
+                      ...(filter.status_mutasi
+                        ? { mutasi_status: "DRAFT" }
+                        : { mutasi_status: "SETUJU" }),
                     });
                   },
                 }}
@@ -1581,6 +1603,10 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                   setData({
                     ...data,
                     mutasi_from: e,
+                    Debitur: {
+                      ...data.Debitur,
+                      kantor_bayar: e,
+                    },
                   }),
               }}
             />
@@ -1637,7 +1663,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
             <FormInput
               data={{
                 label: "Tujuan Penggunaan",
-                type: "textarea",
+                type: "select",
                 mode: "vertical",
                 required: true,
                 value: data.penggunaan,
@@ -1646,6 +1672,13 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                     ...data,
                     penggunaan: e,
                   }),
+                options: [
+                  { label: "RENOVASI RUMAH", value: "RENOVASI RUMAH" },
+                  { label: "MODAL USAHA", value: "MODAL USAHA" },
+                  { label: "DANA PENDIDIKAN", value: "DANA PENDIDIKAN" },
+                  { label: "KONSUMTIF", value: "KONSUMTIF" },
+                  { label: "LAINNYA", value: "LAINNYA" },
+                ],
               }}
             />
           </Col>
@@ -1765,7 +1798,33 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
             }}
           />
         </div>
-        <div className="flex justify-end gap-4 items-center">
+        <div className="p-1 border-b border-gray-300">
+          <FormInput
+            data={{
+              label: "Video Pencairan2",
+              value: data.video_pencairan2,
+              onChange: (e: string) =>
+                setData({ ...data, video_pencairan2: e }),
+              type: "upload",
+              mode: "horizontal",
+              accept: "video/mp4",
+            }}
+          />
+        </div>
+        <div className="p-1 border-b border-gray-300">
+          <FormInput
+            data={{
+              label: "Video Pencairan3",
+              value: data.video_pencairan3,
+              onChange: (e: string) =>
+                setData({ ...data, video_pencairan3: e }),
+              type: "upload",
+              mode: "horizontal",
+              accept: "video/mp4",
+            }}
+          />
+        </div>
+        <div className="flex justify-end gap-4 items-center mt-2">
           <Link
             href={
               defaultData
@@ -1890,7 +1949,11 @@ const defaultDapem: IDapemCreate = {
   JenisPembiayaan: {} as JenisPembiayaan,
   ProdukPembiayaan: {} as IProdukPembiayaan,
   CreatedBy: {} as User,
+  PenyerahanBerkas: {} as PenyerahanBerkas,
+  PenyerahanJaminan: {} as PenyerahanJaminan,
+  Pelunasan: {} as Pelunasan,
   AO: {} as IAO,
+  Angsuran: [],
   Debitur: {
     nopen: "",
     nama_penerima: "",
@@ -1938,6 +2001,7 @@ const defaultDapem: IDapemCreate = {
     bank: "",
     ibu_kandung: "",
     Keluarga: [defaultKeluarga],
+    Dapem: [],
   },
   createdById: "",
   aoId: "",

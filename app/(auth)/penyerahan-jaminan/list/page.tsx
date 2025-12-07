@@ -1,19 +1,19 @@
 "use client";
 
-import { FormInput } from "@/components";
+import { FormInput, ViewFiles } from "@/components";
 import {
   IActionTable,
   IDapem,
   IPageProps,
-  IPencairan,
   IPenyerahanJaminan,
+  IViewFiles,
 } from "@/components/IInterfaces";
+import { printTBO } from "@/components/pdfs/PenyerahanJaminan";
 import { IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
 import {
   FileFilled,
   FormOutlined,
-  PayCircleOutlined,
   PrinterOutlined,
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
@@ -52,6 +52,10 @@ export default function Page() {
     openUpsert: false,
     openDelete: false,
     selected: undefined,
+  });
+  const [views, setViews] = useState<IViewFiles>({
+    open: false,
+    data: [],
   });
   const { hasAccess } = useAccess("/penyerahan-jaminan/list");
   const { modal } = App.useApp();
@@ -114,7 +118,7 @@ export default function Page() {
       dataIndex: ["Sumdan", "name"],
     },
     {
-      title: "Nomor TBO",
+      title: "Nomor TTPJ",
       key: "id",
       dataIndex: "id",
     },
@@ -167,7 +171,6 @@ export default function Page() {
             </Tag>
           </p>
           <p className="opacity-70 italic text-xs">
-            Tgl:{" "}
             {record.jaminan_date
               ? moment(record.jaminan_date).format("DD-MM-YYYY HH:mm")
               : ""}
@@ -201,26 +204,35 @@ export default function Page() {
               ></Button>
             )}
             {hasAccess("update") && (
-              <Tooltip title="Cetak SI">
+              <Tooltip title="Cetak Surat Penyerahan Jaminan">
                 <Button
                   icon={<PrinterOutlined />}
                   size="small"
                   type="primary"
+                  onClick={() => printTBO(record)}
                 ></Button>
               </Tooltip>
             )}
-            <Tooltip title="Berkas SI">
+            <Tooltip title="Berkas - Berkas">
               <Button
                 icon={<FileFilled />}
                 size="small"
                 disabled={!record.file_si}
-              ></Button>
-            </Tooltip>
-            <Tooltip title="Bukti Transfer">
-              <Button
-                icon={<FileFilled />}
-                size="small"
-                disabled={!record.file_proof}
+                onClick={() =>
+                  setViews({
+                    open: true,
+                    data: [
+                      {
+                        name: "Penyerahan Jaminan",
+                        url: record.file_si || "",
+                      },
+                      {
+                        name: "Bukti Penerimaan",
+                        url: record.file_proof || "",
+                      },
+                    ],
+                  })
+                }
               ></Button>
             </Tooltip>
           </div>
@@ -441,6 +453,10 @@ export default function Page() {
           )}
         </Modal>
       )}
+      <ViewFiles
+        setOpen={(v: boolean) => setViews({ ...views, open: v })}
+        data={{ ...views }}
+      />
     </Card>
   );
 }
@@ -486,6 +502,19 @@ const columnDapem: TableProps<IDapem>["columns"] = [
         <div>
           <p>{IDRFormat(record.plafond)}</p>
           <p>{record.tenor} Bulan</p>
+        </div>
+      );
+    },
+  },
+  {
+    title: "Akad & Jaminan",
+    key: "akad",
+    dataIndex: "akad",
+    render(value, record, index) {
+      return (
+        <div>
+          <p>{record.akad_nomor}</p>
+          <p className="opacity-70 text-xs">{record.Debitur.no_skep}</p>
         </div>
       );
     },

@@ -1,12 +1,14 @@
 "use client";
 
-import { FormInput } from "@/components";
+import { FormInput, ViewFiles } from "@/components";
 import {
   IActionTable,
   IDapem,
   IPageProps,
   IPencairan,
+  IViewFiles,
 } from "@/components/IInterfaces";
+import { printSI } from "@/components/pdfs/Dropping";
 import { IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
 import {
@@ -51,6 +53,11 @@ export default function Page() {
     openDelete: false,
     selected: undefined,
   });
+  const [views, setViews] = useState<IViewFiles>({
+    open: false,
+    data: [],
+  });
+
   const { hasAccess } = useAccess("/pencairan/list");
   const { modal } = App.useApp();
 
@@ -236,21 +243,27 @@ export default function Page() {
                   icon={<PrinterOutlined />}
                   size="small"
                   type="primary"
+                  onClick={() => printSI(record)}
                 ></Button>
               </Tooltip>
             )}
-            <Tooltip title="Berkas SI">
+            <Tooltip title="Berkas Akad & Dropping">
               <Button
                 icon={<FileFilled />}
                 size="small"
-                disabled={!record.file_si}
-              ></Button>
-            </Tooltip>
-            <Tooltip title="Bukti Transfer">
-              <Button
-                icon={<FileFilled />}
-                size="small"
-                disabled={!record.file_proof}
+                onClick={() =>
+                  setViews({
+                    open: true,
+                    data: [
+                      { name: "Berkas SI", url: record.file_si || "" },
+                      { name: "Bukti Transfer", url: record.file_proof || "" },
+                      ...record.Dapem.map((d) => ({
+                        name: "Akad " + d.Debitur.nama_penerima,
+                        url: d.file_akad || "",
+                      })),
+                    ],
+                  })
+                }
               ></Button>
             </Tooltip>
           </div>
@@ -472,85 +485,123 @@ export default function Page() {
           )}
         </Modal>
       )}
+      <ViewFiles
+        setOpen={(v: boolean) => setViews({ ...views, open: v })}
+        data={{ ...views }}
+      />
     </Card>
   );
 }
 
-const columnDapem: TableProps<IDapem>["columns"] = [
-  {
-    title: "ID",
-    key: "id",
-    dataIndex: "id",
-  },
-  {
-    title: "Pemohon",
-    key: "pemohon",
-    dataIndex: "pemohon",
-    render(value, record, index) {
-      return (
-        <div>
-          <p>{record.Debitur.nama_penerima}</p>
-          <p className="opacity-70">{record.nopen}</p>
-        </div>
-      );
-    },
-  },
-  {
-    title: "ProdukPembiayaan",
-    key: "produk",
-    dataIndex: "produk",
-    render(value, record, index) {
-      return (
-        <div>
-          <p>{record.ProdukPembiayaan.name}</p>
-          <p>{record.JenisPembiayaan.name}</p>
-        </div>
-      );
-    },
-  },
-  {
-    title: "Plafond",
-    key: "plafond",
-    dataIndex: "plafond",
-    render(value, record, index) {
-      return (
-        <div>
-          <p>{IDRFormat(record.plafond)}</p>
-          <p>{record.tenor} Bulan</p>
-        </div>
-      );
-    },
-  },
-  {
-    title: "Adm Sumdan & Rekening",
-    key: "admsumdan",
-    dataIndex: "admsumdan",
-    render(value, record, index) {
-      return (
-        <div>
-          <p>
-            Adm :{" "}
-            <Tag color={"blue"}>
-              {IDRFormat(record.plafond * (record.c_adm_sumdan / 100))}
-            </Tag>
-          </p>
-          <p>
-            Rekening : <Tag color={"blue"}>{IDRFormat(record.c_rekening)}</Tag>
-          </p>
-        </div>
-      );
-    },
-  },
-];
-
 const TableDapem = ({ data }: { data: IDapem[] }) => {
+  const [views, setViews] = useState<IViewFiles>({
+    open: false,
+    data: [],
+  });
+
+  const columnDapem: TableProps<IDapem>["columns"] = [
+    {
+      title: "ID",
+      key: "id",
+      dataIndex: "id",
+    },
+    {
+      title: "Pemohon",
+      key: "pemohon",
+      dataIndex: "pemohon",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>{record.Debitur.nama_penerima}</p>
+            <p className="opacity-70">{record.nopen}</p>
+          </div>
+        );
+      },
+    },
+    {
+      title: "ProdukPembiayaan",
+      key: "produk",
+      dataIndex: "produk",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>{record.ProdukPembiayaan.name}</p>
+            <p>{record.JenisPembiayaan.name}</p>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Plafond",
+      key: "plafond",
+      dataIndex: "plafond",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>{IDRFormat(record.plafond)}</p>
+            <p>{record.tenor} Bulan</p>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Adm Sumdan & Rekening",
+      key: "admsumdan",
+      dataIndex: "admsumdan",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>
+              Adm :{" "}
+              <Tag color={"blue"}>
+                {IDRFormat(record.plafond * (record.c_adm_sumdan / 100))}
+              </Tag>
+            </p>
+            <p>
+              Rekening :{" "}
+              <Tag color={"blue"}>{IDRFormat(record.c_rekening)}</Tag>
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Akad",
+      dataIndex: "akad",
+      key: "akad",
+      render(value, record, index) {
+        return (
+          <div className="flex gap-2">
+            <Button
+              icon={<FileFilled />}
+              size="small"
+              disabled={!record.file_akad}
+              onClick={() =>
+                setViews({
+                  open: true,
+                  data: [{ name: "Berkas Akad", url: record.file_akad || "" }],
+                })
+              }
+            ></Button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
-    <Table
-      bordered
-      pagination={false}
-      rowKey={"id"}
-      columns={columnDapem}
-      dataSource={data}
-    />
+    <>
+      <Table
+        bordered
+        pagination={false}
+        rowKey={"id"}
+        columns={columnDapem}
+        dataSource={data}
+      />
+      <ViewFiles
+        setOpen={(v: boolean) => setViews({ ...views, open: v })}
+        data={{ ...views }}
+      />
+    </>
   );
 };

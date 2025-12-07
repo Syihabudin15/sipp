@@ -1,7 +1,14 @@
 "use client";
 
-import { FormInput, PDFAkad } from "@/components";
-import { IActionTable, IDapem, IPageProps } from "@/components/IInterfaces";
+import { FormInput, ViewFiles } from "@/components";
+import { useUser } from "@/components/contexts/UserContext";
+import {
+  IActionTable,
+  IDapem,
+  IPageProps,
+  IViewFiles,
+} from "@/components/IInterfaces";
+import { printContract } from "@/components/pdfs/Akad";
 import { getAngsuran, IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
 import {
@@ -37,8 +44,6 @@ const { RangePicker } = DatePicker;
 
 interface IActionTableAkad<T> extends IActionTable<T> {
   cetakAkad: boolean;
-  openAkad: boolean;
-  showAkad: boolean;
 }
 
 export default function Page() {
@@ -59,13 +64,16 @@ export default function Page() {
     openDelete: false,
     selected: undefined,
     cetakAkad: false,
-    openAkad: false,
-    showAkad: false,
   });
   const [sumdans, setSumdans] = useState<Sumdan[]>([]);
   const [jeniss, setJeniss] = useState<JenisPembiayaan[]>([]);
   const { modal } = App.useApp();
   const { hasAccess } = useAccess("/monitoring");
+  const user = useUser();
+  const [views, setViews] = useState<IViewFiles>({
+    open: false,
+    data: [],
+  });
 
   const getData = async () => {
     setLoading(true);
@@ -232,18 +240,22 @@ export default function Page() {
       render(value, record, index) {
         return (
           <div>
-            <p>
-              Pelunasan Ke{" "}
-              <Tag color={"blue"}>
-                {record.pelunasan_ke} (
-                {moment(record.pelunasan_date).format("DD/MM/YYYY")})
-              </Tag>
-            </p>
-            <p>
-              Mutasi <Tag color={"red"}>{record.mutasi_from}</Tag>{" "}
-              <ArrowRightOutlined />{" "}
-              <Tag color={"blue"}>{record.mutasi_ke}</Tag>
-            </p>
+            {record.JenisPembiayaan.status_pelunasan && (
+              <p>
+                Pelunasan Ke{" "}
+                <Tag color={"blue"}>
+                  {record.pelunasan_ke} (
+                  {moment(record.pelunasan_date).format("DD/MM/YYYY")})
+                </Tag>
+              </p>
+            )}
+            {record.JenisPembiayaan.status_mutasi && (
+              <p>
+                Mutasi <Tag color={"red"}>{record.mutasi_from}</Tag>{" "}
+                <ArrowRightOutlined style={{ fontSize: 10 }} />{" "}
+                <Tag color={"blue"}>{record.mutasi_ke}</Tag>
+              </p>
+            )}
           </div>
         );
       },
@@ -293,11 +305,10 @@ export default function Page() {
             }}
             style={{ fontSize: 11 }}
           >
-            Keterangan{" "}
             {record.verif_date
               ? `(${moment(record.verif_date).format("DD-MM-YYYY HH:mm")})`
               : ""}{" "}
-            : {record.verif_desc}
+            {record.verif_desc}
           </Paragraph>
         </div>
       ),
@@ -331,11 +342,10 @@ export default function Page() {
             }}
             style={{ fontSize: 11 }}
           >
-            Keterangan{" "}
             {record.slik_date
               ? `(${moment(record.slik_date).format("DD-MM-YYYY HH:mm")})`
               : ""}{" "}
-            : {record.slik_desc}
+            {record.slik_desc}
           </Paragraph>
         </div>
       ),
@@ -369,11 +379,10 @@ export default function Page() {
             }}
             style={{ fontSize: 11 }}
           >
-            Keterangan{" "}
             {record.approv_date
               ? `(${moment(record.approv_date).format("DD-MM-YYYY HH:mm")})`
               : ""}{" "}
-            : {record.approv_desc}
+            {record.approv_desc}
           </Paragraph>
         </div>
       ),
@@ -405,7 +414,6 @@ export default function Page() {
             </Tag>
           </p>
           <p className="text-xs">
-            Tanggal:{" "}
             {record.final_at
               ? moment(record.final_at).format("DD-MM-YYYY HH:mm")
               : ""}
@@ -425,7 +433,10 @@ export default function Page() {
               size="small"
               disabled={!record.file_akad}
               onClick={() =>
-                setSelected({ ...selected, selected: record, showAkad: true })
+                setViews({
+                  open: true,
+                  data: [{ name: "Berkas Akad", url: record.file_akad || "" }],
+                })
               }
             ></Button>
             {hasAccess("update") && (
@@ -538,7 +549,29 @@ export default function Page() {
 
   const generatePK = async () => {
     setLoading(true);
-    setSelected({ ...selected, cetakAkad: false, openAkad: true });
+    await fetch("/api/akad", {
+      method: "POST",
+      body: JSON.stringify({
+        id: selected.selected?.id,
+        akad_date: selected.selected?.akad_date,
+        akad_nomor: selected.selected?.akad_nomor,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        const { msg, status, data } = res;
+        if (status !== 200) {
+          modal.error({ content: msg });
+        } else {
+          modal.success({ content: msg });
+          const { selected: sel } = selected;
+          printContract({ ...sel, Angsuran: data } as IDapem);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        modal.error({ content: `Internal Server Error!!. Generate PK gagal` });
+      });
     setLoading(false);
   };
 
@@ -559,13 +592,15 @@ export default function Page() {
               setPageProps({ ...pageProps, backdate: dateStr })
             }
           />
-          <Select
-            size="small"
-            placeholder="Pilih Sumdan..."
-            options={sumdans.map((s) => ({ label: s.code, value: s.id }))}
-            onChange={(e) => setPageProps({ ...pageProps, sumdanId: e })}
-            allowClear
-          />
+          {user && !user.sumdanId && (
+            <Select
+              size="small"
+              placeholder="Pilih Sumdan..."
+              options={sumdans.map((s) => ({ label: s.code, value: s.id }))}
+              onChange={(e) => setPageProps({ ...pageProps, sumdanId: e })}
+              allowClear
+            />
+          )}
           <Select
             size="small"
             placeholder="Pilih Jenis..."
@@ -620,6 +655,53 @@ export default function Page() {
             }));
           },
           pageSizeOptions: [50, 100, 500, 1000],
+        }}
+        summary={(pageData) => {
+          return (
+            <Table.Summary.Row className="text-xs bg-blue-400">
+              <Table.Summary.Cell index={0} colSpan={3} className="text-center">
+                <b>SUMMARY</b>
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={4} className="text-center">
+                <b>
+                  {IDRFormat(
+                    pageData.reduce((acc, item) => acc + item.plafond, 0)
+                  )}{" "}
+                </b>
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={4} className="text-center">
+                <b>
+                  {IDRFormat(
+                    pageData.reduce(
+                      (acc, item) =>
+                        acc +
+                        getAngsuran(
+                          item.plafond,
+                          item.tenor,
+                          item.margin + item.margin_sumdan,
+                          item.pembulatan
+                        ).angsuran,
+                      0
+                    )
+                  )}{" "}
+                  /{" "}
+                  {IDRFormat(
+                    pageData.reduce(
+                      (acc, item) =>
+                        acc +
+                        getAngsuran(
+                          item.plafond,
+                          item.tenor,
+                          item.margin_sumdan,
+                          item.pembulatan
+                        ).angsuran,
+                      0
+                    )
+                  )}
+                </b>
+              </Table.Summary.Cell>
+            </Table.Summary.Row>
+          );
         }}
       />
       <Modal
@@ -696,21 +778,10 @@ export default function Page() {
           />
         </Modal>
       )}
-      {selected.selected && (
-        <Modal
-          title={`AKAD ${selected.selected.Debitur.nama_penerima} (${selected.selected.nopen})`}
-          open={selected.openAkad}
-          onCancel={() =>
-            setSelected({ ...selected, openAkad: false, selected: undefined })
-          }
-          footer={[]}
-          style={{ top: 20 }}
-          width={1200}
-          key={selected.selected.id}
-        >
-          <PDFAkad data={selected.selected} />
-        </Modal>
-      )}
+      <ViewFiles
+        setOpen={(v: boolean) => setViews({ ...views, open: v })}
+        data={{ ...views }}
+      />
     </Card>
   );
 }

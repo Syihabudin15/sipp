@@ -1,7 +1,7 @@
 "use client";
 
 import { IActionTable, IDapem, IPageProps } from "@/components/IInterfaces";
-import { IDRFormat } from "@/components/Utils";
+import { getAngsuran, IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
 import {
   DeleteOutlined,
@@ -104,6 +104,25 @@ export default function Page() {
               Tenor : <Tag color={"blue"}>{record.tenor} Bulan</Tag>
             </p>
           </div>
+        );
+      },
+    },
+    {
+      title: "Angsuran",
+      dataIndex: "angsuran",
+      key: "angsuran",
+      render(value, record, index) {
+        return (
+          <Tag color={"blue"}>
+            {IDRFormat(
+              getAngsuran(
+                record.plafond,
+                record.tenor,
+                record.margin + record.margin_sumdan,
+                record.pembulatan
+              ).angsuran
+            )}
+          </Tag>
         );
       },
     },

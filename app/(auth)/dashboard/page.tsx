@@ -19,10 +19,20 @@ import {
   FileDoneOutlined,
   PayCircleOutlined,
 } from "@ant-design/icons";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
 import { IRole } from "@/components/IInterfaces";
 import { Dapem, Pelunasan } from "@prisma/client";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { IDRFormat } from "@/components/Utils";
+import { useUser } from "@/components/contexts/UserContext";
 
 interface IDashboard {
   kyd: number;
@@ -39,6 +49,8 @@ interface IDashboard {
   akad: Dapem[];
   pelunasan: Pelunasan[];
   pelunasanreq: Pelunasan[];
+  sumdan: { name: string; total: number }[];
+  produk: { name: string; noa: number; total: number }[];
 }
 
 const PensionCreditDashboard = () => {
@@ -60,8 +72,11 @@ const PensionCreditDashboard = () => {
     akad: [],
     pelunasan: [],
     pelunasanreq: [],
+    sumdan: [],
+    produk: [],
   });
   const [loading, setLoading] = useState(false);
+  const user = useUser();
 
   useEffect(() => {
     (async () => {
@@ -70,13 +85,14 @@ const PensionCreditDashboard = () => {
         .then((res) => res.json())
         .then((res) => setData(res));
       setLoading(false);
+
       setInterval(async () => {
         setLoading(true);
         await fetch("/api")
           .then((res) => res.json())
           .then((res) => setData(res));
         setLoading(false);
-      }, 10000);
+      }, 60000);
     })();
   }, []);
 
@@ -191,7 +207,7 @@ const PensionCreditDashboard = () => {
                 }}
               />
               <Divider style={{ margin: "8px 0" }} />
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {data.roles.map((r) => (
                   <Tag color="blue" key={r.id}>
                     {r.name} {r.User.length}
@@ -227,7 +243,13 @@ const PensionCreditDashboard = () => {
         <Row gutter={[16, 16]}>
           {/* Kolom Kiri: Distribusi Pinjaman */}
           <Col xs={24} lg={16}>
-            <Card title="Distribusi Kredit per Sumber Dana">
+            <Card
+              title={
+                user && user.sumdanId
+                  ? "Distribusi Kredir per Produk"
+                  : "Distribusi Kredit per Sumber Dana"
+              }
+            >
               {/* Placeholder untuk Grafik Bar/Pie */}
               <div
                 style={{
@@ -240,8 +262,38 @@ const PensionCreditDashboard = () => {
                   borderRadius: 8,
                 }}
               >
-                [Placeholder: Grafik Bar - Distribusi Pinjaman Jangka Pendek,
-                Menengah, Panjang]
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={user && user.sumdanId ? data.produk : data.sumdan}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis
+                      tickFormatter={(value) =>
+                        new Intl.NumberFormat("id-ID", {
+                          style: "currency",
+                          currency: "IDR",
+                          maximumFractionDigits: 0,
+                        }).format(value)
+                      }
+                    />
+                    <Tooltip
+                      formatter={(_, __, item) => {
+                        const { noa, total } = item.payload;
+
+                        return [
+                          `${new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                            maximumFractionDigits: 0,
+                          }).format(total)}`,
+                          `${noa} Debitur`,
+                        ];
+                      }}
+                    />
+                    <Bar dataKey="total" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </Card>
           </Col>

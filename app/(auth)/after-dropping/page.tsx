@@ -16,6 +16,7 @@ import {
   FileFilled,
   FolderOpenFilled,
   FolderOutlined,
+  SwapOutlined,
 } from "@ant-design/icons";
 import { Sumdan } from "@prisma/client";
 import {
@@ -44,8 +45,8 @@ export default function Page() {
     data: [],
     search: "",
     sumdanId: "",
-    berkas_status: "",
-    jaminan_status: "",
+    mutasi_status: "",
+    pelunasan_status: "",
     backdate: "",
   });
   const [action, setAction] = useState<IActionTable<IDapem>>({
@@ -61,7 +62,7 @@ export default function Page() {
 
   const [sumdans, setSumdans] = useState<Sumdan[]>([]);
   const { modal } = App.useApp();
-  const { hasAccess } = useAccess("/pemberkasan");
+  const { hasAccess } = useAccess("/after-dropping");
   const user = useUser();
 
   const getData = async () => {
@@ -70,17 +71,18 @@ export default function Page() {
     params.append("page", pageProps.page.toString());
     params.append("limit", pageProps.limit.toString());
     params.append("approv_status", "SETUJU");
+
     if (pageProps.search) {
       params.append("search", pageProps.search);
     }
     if (pageProps.sumdanId) {
       params.append("sumdanId", pageProps.sumdanId);
     }
-    if (pageProps.berkas_status) {
-      params.append("berkas_status", pageProps.berkas_status);
+    if (pageProps.mutasi_status) {
+      params.append("mutasi_status", pageProps.mutasi_status);
     }
-    if (pageProps.jaminan_status) {
-      params.append("jaminan_status", pageProps.jaminan_status);
+    if (pageProps.pelunasan_status) {
+      params.append("pelunasan_status", pageProps.pelunasan_status);
     }
     if (pageProps.backdate) {
       params.append("backdate", pageProps.backdate);
@@ -106,8 +108,8 @@ export default function Page() {
     pageProps.search,
     pageProps.sumdanId,
     pageProps.backdate,
-    pageProps.berkas_status,
-    pageProps.jaminan_status,
+    pageProps.mutasi_status,
+    pageProps.pelunasan_status,
   ]);
 
   useEffect(() => {
@@ -225,22 +227,9 @@ export default function Page() {
       },
     },
     {
-      title: "Akad & Jaminan",
-      key: "akad",
-      dataIndex: "akad",
-      render(value, record, index) {
-        return (
-          <div>
-            <p>{record.akad_nomor}</p>
-            <p className="opacity-70 text-xs">{record.Debitur.no_skep}</p>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Status DROPPING",
-      dataIndex: "status_final",
-      key: "status_final",
+      title: "Status Takeover",
+      dataIndex: "pelunasan_status",
+      key: "pelunasan_status",
       width: 200,
       render: (_, record, i) => (
         <div className="">
@@ -248,33 +237,37 @@ export default function Page() {
             Status:{" "}
             <Tag
               color={
-                record.status_final === "TRANSFER"
+                record.pelunasan_status === "SETUJU"
                   ? "green"
-                  : record.status_final === "DRAFT"
+                  : record.pelunasan_status === "PENDING"
                   ? "blue"
-                  : record.status_final === "ANTRI"
+                  : record.pelunasan_status === "DRAFT"
                   ? "orange"
-                  : record.status_final === "PROSES"
-                  ? "blue"
                   : "red"
               }
               variant="solid"
             >
-              {record.status_final}
+              {record.pelunasan_status === "SETUJU"
+                ? "SELESAI"
+                : record.pelunasan_status === "PENDING"
+                ? "PROSES"
+                : record.pelunasan_status === "DRAFT"
+                ? "PENDING"
+                : "GAGAL"}
             </Tag>
           </p>
           <p className="text-xs italic">
-            {record.final_at
-              ? moment(record.final_at).format("DD-MM-YYYY HH:mm")
+            {record.pelunasan_date
+              ? moment(record.pelunasan_date).format("DD-MM-YYYY")
               : ""}
           </p>
         </div>
       ),
     },
     {
-      title: "Status Berkas",
-      dataIndex: "berkas",
-      key: "berkas",
+      title: "Status Mutasi",
+      dataIndex: "mutasi_status",
+      key: "mutasi_status",
       width: 200,
       render: (_, record, i) => (
         <div className="">
@@ -282,108 +275,32 @@ export default function Page() {
             Status:{" "}
             <Tag
               color={
-                ["CABANG", "PUSAT", "DEBITUR"].includes(record.berkas_status)
-                  ? "orange"
-                  : record.berkas_status === "SENDING"
+                record.mutasi_status === "SETUJU"
+                  ? "green"
+                  : record.mutasi_status === "PENDING"
                   ? "blue"
-                  : "green"
+                  : record.mutasi_status === "DRAFT"
+                  ? "orange"
+                  : "red"
               }
               variant="solid"
             >
-              {record.berkas_status}
+              {record.mutasi_status === "SETUJU"
+                ? "SELESAI"
+                : record.mutasi_status === "PENDING"
+                ? "PROSES"
+                : record.mutasi_status === "DRAFT"
+                ? "PENDING"
+                : "GAGAL"}
             </Tag>
           </p>
           <p className="text-xs italic">
-            {record.PenyerahanBerkas && record.PenyerahanBerkas.berkas_date
-              ? moment(record.PenyerahanBerkas.berkas_date).format(
-                  "DD-MM-YYYY HH:mm"
-                )
-              : record.PenyerahanBerkas
-              ? moment(record.PenyerahanBerkas.created_at).format(
-                  "DD/MM/YYYY HH:mm"
-                )
-              : "-"}
+            {record.mutasi_date
+              ? moment(record.mutasi_date).format("DD-MM-YYYY")
+              : ""}
           </p>
         </div>
       ),
-    },
-    {
-      title: "Status Jaminan",
-      dataIndex: "jaminan",
-      key: "jaminan",
-      width: 200,
-      render: (_, record, i) => (
-        <div className="">
-          <p>
-            Status:{" "}
-            <Tag
-              color={
-                ["CABANG", "PUSAT", "DEBITUR"].includes(record.jaminan_status)
-                  ? "orange"
-                  : record.jaminan_status === "SENDING"
-                  ? "blue"
-                  : "green"
-              }
-              variant="solid"
-            >
-              {record.jaminan_status}
-            </Tag>
-          </p>
-          <p className="text-xs italic">
-            {record.PenyerahanJaminan && record.PenyerahanJaminan.jaminan_date
-              ? moment(record.PenyerahanJaminan.jaminan_date).format(
-                  "DD-MM-YYYY HH:mm"
-                )
-              : record.PenyerahanJaminan
-              ? moment(record.PenyerahanJaminan.created_at).format(
-                  "DD/MM/YYYY HH:mm"
-                )
-              : "-"}
-          </p>
-        </div>
-      ),
-    },
-    {
-      title: "Status TBO",
-      dataIndex: "tbo",
-      key: "tbo",
-      width: 200,
-      render: (_, record, i) => {
-        const tbo = moment(record.created_at).add(record.tbo, "month");
-        const now = moment();
-        const status = now.isAfter(tbo) && !record.penyerahanJaminanId;
-        return (
-          <div className="">
-            <p>
-              Status:{" "}
-              <Tag
-                color={
-                  status
-                    ? "red"
-                    : record.jaminan_status === "CABANG" ||
-                      record.jaminan_status === "PUSAT"
-                    ? "orange"
-                    : record.jaminan_status === "SENDING"
-                    ? "blue"
-                    : "green"
-                }
-                variant="solid"
-              >
-                {status
-                  ? "LEWAT TBO"
-                  : record.jaminan_status === "SUMDAN"
-                  ? "OK"
-                  : "MASA TBO"}
-              </Tag>
-            </p>
-            <p className="text-xs italic">
-              {moment(record.created_at).format("DD/MM/YYYY")}{" "}
-              <ArrowRightOutlined style={{ fontSize: 10 }} />{" "}
-              {tbo.format("DD/MM/YYYY")}
-            </p>
-          </div>
-        );
-      },
     },
     {
       title: "Created",
@@ -505,7 +422,7 @@ export default function Page() {
     <Card
       title={
         <div className="flex gap-2 font-bold text-xl">
-          <FolderOpenFilled /> Berkas Pembiayaan
+          <SwapOutlined /> Mutasi & Takeover
         </div>
       }
       styles={{ body: { padding: 5 } }}
@@ -529,26 +446,26 @@ export default function Page() {
           )}
           <Select
             size="small"
-            placeholder="Status Berkas..."
+            placeholder="Status Takeover..."
             options={[
-              { label: "CABANG", value: "CABANG" },
-              { label: "PUSAT", value: "PUSAT" },
-              { label: "SENDING", value: "SENDING" },
-              { label: "SUMDAN", value: "SUMDAN" },
+              { label: "PENDING", value: "DRAFT" },
+              { label: "PROSES", value: "PENDING" },
+              { label: "SELESAI", value: "SETUJU" },
             ]}
-            onChange={(e) => setPageProps({ ...pageProps, berkas_status: e })}
+            onChange={(e) =>
+              setPageProps({ ...pageProps, pelunasan_status: e })
+            }
             allowClear
           />
           <Select
             size="small"
-            placeholder="Status Jaminan..."
+            placeholder="Status Mutasi..."
             options={[
-              { label: "CABANG", value: "CABANG" },
-              { label: "PUSAT", value: "PUSAT" },
-              { label: "SENDING", value: "SENDING" },
-              { label: "SUMDAN", value: "SUMDAN" },
+              { label: "PENDING", value: "DRAFT" },
+              { label: "PROSES", value: "PENDING" },
+              { label: "SELESAI", value: "SETUJU" },
             ]}
-            onChange={(e) => setPageProps({ ...pageProps, jaminan_status: e })}
+            onChange={(e) => setPageProps({ ...pageProps, mutasi_status: e })}
             allowClear
           />
         </div>
@@ -586,7 +503,7 @@ export default function Page() {
       />
       {action.selected && (
         <Modal
-          title={`UPDATE BERKAS ${action.selected.Debitur.nama_penerima} (${action.selected.nopen})`}
+          title={`UPDATE MUTASI/TAKEOVER ${action.selected.Debitur.nama_penerima} (${action.selected.nopen})`}
           open={action.openUpsert}
           key={action.selected.id || "create"}
           onCancel={() =>
@@ -600,60 +517,82 @@ export default function Page() {
         >
           <FormInput
             data={{
-              label: "Status Berkas",
+              label: "Status Takeover",
               type: "select",
               required: true,
-              value: action.selected.berkas_status,
+              value: action.selected.pelunasan_status,
               onChange: (e: any) =>
                 setAction({
                   ...action,
                   selected: {
                     ...action.selected,
-                    berkas_status: e,
+                    pelunasan_status: e,
                   } as IDapem,
                 }),
               options: [
-                { label: "SENDING", value: "SENDING" },
-                { label: "CABANG", value: "CABANG" },
-                { label: "PUSAT", value: "PUSAT" },
-                { label: "SUMDAN", value: "SUMDAN" },
+                { label: "PENDING", value: "DRAFT" },
+                { label: "PROSES", value: "PENDING" },
+                { label: "SELESAI", value: "SETUJU" },
               ],
             }}
           />
           <FormInput
             data={{
-              label: "Tanggal Terima Berkas",
+              label: "Tanggal Takeover",
               type: "date",
-              disabled: true,
-            }}
-          />
-          <FormInput
-            data={{
-              label: "Status Jaminan",
-              type: "select",
               required: true,
-              value: action.selected.jaminan_status,
+              value: moment(action.selected.pelunasan_date).format(
+                "YYYY-MM-DD"
+              ),
               onChange: (e: any) =>
                 setAction({
                   ...action,
                   selected: {
                     ...action.selected,
-                    jaminan_status: e,
+                    pelunasan_date: !isNaN(new Date(e).getTime())
+                      ? moment(e).toDate()
+                      : null,
+                  } as IDapem,
+                }),
+            }}
+          />
+          <FormInput
+            data={{
+              label: "Status Mutasi",
+              type: "select",
+              required: true,
+              value: action.selected.mutasi_status,
+              onChange: (e: any) =>
+                setAction({
+                  ...action,
+                  selected: {
+                    ...action.selected,
+                    mutasi_status: e,
                   } as IDapem,
                 }),
               options: [
-                { label: "SENDING", value: "SENDING" },
-                { label: "CABANG", value: "CABANG" },
-                { label: "PUSAT", value: "PUSAT" },
-                { label: "SUMDAN", value: "SUMDAN" },
+                { label: "PENDING", value: "DRAFT" },
+                { label: "PROSES", value: "PENDING" },
+                { label: "SELESAI", value: "SETUJU" },
               ],
             }}
           />
           <FormInput
             data={{
-              label: "Tanggal Terima Jaminan",
+              label: "Tanggal Mutasi",
               type: "date",
-              disabled: true,
+              required: true,
+              value: moment(action.selected.mutasi_date).format("YYYY-MM-DD"),
+              onChange: (e: any) =>
+                setAction({
+                  ...action,
+                  selected: {
+                    ...action.selected,
+                    mutasi_date: !isNaN(new Date(e).getTime())
+                      ? moment(e).toDate()
+                      : null,
+                  } as IDapem,
+                }),
             }}
           />
         </Modal>

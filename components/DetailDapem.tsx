@@ -15,7 +15,7 @@ import {
   UserOutlined,
   VideoCameraOutlined,
 } from "@ant-design/icons";
-import { IDapem, IDebitur } from "./IInterfaces";
+import { IDapem, IDebitur, IViewFiles } from "./IInterfaces";
 import { getAngsuran, getFullAge, IDRFormat } from "./Utils";
 import {
   App,
@@ -31,7 +31,7 @@ import {
 } from "antd";
 import { EStatusDapem, Keluarga } from "@prisma/client";
 import moment from "moment";
-import { FormInput } from ".";
+import { FormInput, ViewFiles } from ".";
 import { useState } from "react";
 const { Text } = Typography;
 
@@ -109,7 +109,7 @@ export default function DetailDapem({
         className="shadow-xl rounded-lg border-t-4 border-blue-500"
         styles={{ body: { padding: 5 } }}
       >
-        <Tabs defaultActiveKey="1" items={items} size="large" className="p-2" />
+        <Tabs defaultActiveKey="1" items={items} className="p-2" />
       </Card>
     </div>
   );
@@ -215,9 +215,7 @@ const DataPembiayaan = ({ data }: { data: IDapem }) => {
             <Text className="font-bold">
               {(() => {
                 const { year, month, day } = getFullAge(
-                  moment(data.Debitur.tgl_lahir_penerima, "DD-MM-YYYY").format(
-                    "YYYY-MM-DD"
-                  ),
+                  data.Debitur.tgl_lahir_penerima,
                   moment(data.created_at).format("YYYY-MM-DD")
                 );
                 return `${year} Tahun ${month} Bulan ${day} Hari`;
@@ -302,7 +300,7 @@ const DataPembiayaan = ({ data }: { data: IDapem }) => {
             </Text>
           </Descriptions.Item>
           <Descriptions.Item
-            label={`Biaya Admin Sumber Dana (${data.c_adm_sumdan}%)`}
+            label={`Biaya Admin Sumdan (${data.c_adm_sumdan}%)`}
           >
             <Text className="font-bold ">
               {IDRFormat(data.plafond * (data.c_adm_sumdan / 100))}
@@ -447,7 +445,7 @@ const DataDebitur = ({ data }: { data: IDebitur }) => {
           <DataItem label={"Tempat Lahir"} value={data.tempat_lahir} />
           <DataItem
             label={"Tanggal Lahir"}
-            value={moment(data.tgl_lahir_penerima, "DD-MM-YYYY").format(
+            value={moment(data.tgl_lahir_penerima, "YYYY-MM-DD").format(
               "DD/MM/YYYY"
             )}
           />
@@ -546,26 +544,26 @@ const DataDebitur = ({ data }: { data: IDebitur }) => {
         }
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <DataItem label={"Nama SKEP"} value={data.nama_skep} />
           <DataItem label={"Nomor Pensiun"} value={data.nopen} />
           <DataItem label={"Nomor SKEP"} value={data.no_skep} />
           <DataItem
             label={"Gaji Pensiun"}
             value={IDRFormat(data.gaji_pensiun)}
           />
-          <DataItem label={"Nama SKEP"} value={data.nama_skep} />
           <DataItem label={"Pangkat"} value={data.pangkat} />
           <DataItem label={"Kode Jiwa"} value={data.kode_jiwa} />
           <DataItem
             label={"Tanggal SKEP"}
-            value={moment(data.tgl_skep).format("DD/MM/YYYY")}
+            value={moment(data.tgl_skep, "YYYY-MM-DD").format("DD/MM/YYYY")}
           />
           <DataItem
             label={"TMT Pensiun"}
-            value={moment(data.tmt_pensiun).format("DD/MM/YYYY")}
+            value={moment(data.tmt_pensiun, "YYYY-MM-DD").format("DD/MM/YYYY")}
           />
-          <DataItem label={"Kode Jiwa"} value={data.kode_jiwa} />
           <DataItem label={"Kelompok Pensiun"} value={data.kelompok_pensiun} />
           <DataItem label={"Penerbit SKEP"} value={data.penerbit_skep} />
+          <DataItem label={"Kantor Bayar"} value={data.kantor_bayar} />
         </div>
       </Card>
     </div>
@@ -602,7 +600,9 @@ const columns: TableProps<Keluarga>["columns"] = [
     dataIndex: "tgl_lahir",
     key: "tgl_lahir",
     render(value, record, index) {
-      return <>{moment(record.tgl_lahir).format("DD/MM/YYYY")}</>;
+      return (
+        <>{record.tgl_lahir && moment(record.tgl_lahir).format("DD/MM/YYYY")}</>
+      );
     },
   },
   {
@@ -710,7 +710,7 @@ const ProsesStep = ({
         [`${name}_desc`]: data.desc,
         [`${name}_date`]: data.date,
         ...(data.status === "SETUJU" && { ...nextstep }),
-        ...(data.status === "TOLAK" && { final_status: "GAGAL" }),
+        ...(data.status === "TOLAK" && { status_final: "GAGAL" }),
       }),
     })
       .then((res) => res.json())
@@ -809,62 +809,177 @@ const ProsesStep = ({
 };
 
 const BerkasBerkas = ({ data }: { data: IDapem }) => {
+  const [views, setViews] = useState<IViewFiles>({
+    open: false,
+    data: [],
+  });
   return (
     <div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <FileOutlined /> Berkas SLIK
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_slik}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [{ name: "File SLIK", url: data.file_slik || "" }],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <FileOutlined /> Berkas Pengajuan
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_pengajuan}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [
+                { name: "File Pengajuan", url: data.file_pengajuan || "" },
+              ],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <FileOutlined /> Berkas Akad
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_akad}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [{ name: "File Akad", url: data.file_akad || "" }],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <FileOutlined /> Berkas Pencairan
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_pencairan}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [
+                { name: "File Pencairan", url: data.file_pencairan || "" },
+              ],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <FileOutlined /> Berkas Pelunasan
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_pelunasan}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [
+                { name: "File Pelunasan", url: data.file_pelunasan || "" },
+              ],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <FileOutlined /> Berkas Mutasi
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_mutasi}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [{ name: "File Mutasi", url: data.file_mutasi || "" }],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <VideoCameraOutlined /> Video Wawancara
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_wawancara}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [
+                { name: "Video Wawancara", url: data.file_wawancara || "" },
+              ],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <VideoCameraOutlined /> Video Asuransi
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.file_asuransi}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [{ name: "Video Asuransi", url: data.file_asuransi || "" }],
+            })
+          }
+        ></Button>
       </div>
       <div className="flex gap-4 items-center p-2 border-b border-gray-300">
         <div className="min-w-62">
           <VideoCameraOutlined /> Video Pencairan
         </div>
-        <Button icon={<FileFilled />}></Button>
+        <Button
+          icon={<FileFilled />}
+          disabled={!data.video_pencairan}
+          onClick={() =>
+            setViews({
+              open: true,
+              data: [
+                { name: "Video Pencairan", url: data.video_pencairan || "" },
+                ...(data.video_pencairan2
+                  ? [
+                      {
+                        name: "Video Pencairan 2",
+                        url: data.video_pencairan2 || "",
+                      },
+                    ]
+                  : []),
+                ...(data.video_pencairan3
+                  ? [
+                      {
+                        name: "Video Pencairan 3",
+                        url: data.video_pencairan3 || "",
+                      },
+                    ]
+                  : []),
+              ],
+            })
+          }
+        ></Button>
       </div>
+      <ViewFiles
+        setOpen={(v: boolean) => setViews({ ...views, open: v })}
+        data={{ ...views }}
+      />
     </div>
   );
 };

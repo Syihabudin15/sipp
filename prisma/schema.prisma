@@ -30,6 +30,7 @@ enum EStatusFinal {
 }
 
 enum EStatusBerkas {
+  DEBITUR
   CABANG
   SENDING
   SUMDAN

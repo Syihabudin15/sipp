@@ -32,6 +32,7 @@ import {
   FolderViewOutlined,
   SafetyCertificateOutlined,
   SafetyOutlined,
+  SwapOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useUser } from "./contexts/UserContext";
@@ -39,6 +40,7 @@ import { useEffect, useState } from "react";
 import { INotif, IPermission } from "./IInterfaces";
 import { filterMenuItemsByPermission, NotifItem } from "./Utils";
 import { MenuItemType } from "antd/es/menu/interface";
+import { useAccess } from "@/lib/Permission";
 
 const { Header, Content, Sider } = Layout;
 const { Title } = Typography;
@@ -100,6 +102,16 @@ export const menuItems = [
     ],
   },
   {
+    key: "/after-dropping",
+    icon: <SwapOutlined />,
+    label: "Mutasi & Takeover",
+  },
+  {
+    key: "/tagihan",
+    icon: <MoneyCollectOutlined />,
+    label: "Tagihan",
+  },
+  {
     key: "/pemberkasan",
     icon: <FolderViewOutlined />,
     label: "Berkas Pembiayaan",
@@ -149,6 +161,11 @@ export const menuItems = [
     label: "Data Debitur",
   },
   {
+    key: "/database",
+    icon: <DatabaseOutlined />,
+    label: "Database",
+  },
+  {
     key: "/configs",
     label: "Master Data",
     icon: <DatabaseOutlined />,
@@ -191,7 +208,6 @@ export const DashboardLayout = ({
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const router = useRouter();
-  const user = useUser();
   const [notif, setNotif] = useState<INotif>({
     verif: 0,
     slik: 0,
@@ -203,9 +219,12 @@ export const DashboardLayout = ({
     pb: 0,
     ctbo: 0,
     tbo: 0,
+    pelunasan: 0,
   });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const user = useUser();
+  const { crossAccess } = useAccess("/dashboard");
 
   const getNotif = async () => {
     await fetch("/api/notif")
@@ -220,7 +239,7 @@ export const DashboardLayout = ({
       await getNotif();
       setInterval(async () => {
         await getNotif();
-      }, 10000);
+      }, 3000);
     })();
   }, []);
 
@@ -232,6 +251,11 @@ export const DashboardLayout = ({
         window && window.location.replace("/");
       });
     setLoading(false);
+  };
+
+  const handleNotifCount = (notif: { count: number; url: string }): number => {
+    if (crossAccess("read", notif.url)) return notif.count;
+    return 0;
   };
 
   return (
@@ -293,7 +317,7 @@ export const DashboardLayout = ({
               popupRender={() => (
                 <div
                   style={{
-                    width: 300,
+                    width: 250,
                     maxHeight: 300,
                     overflowY: "auto",
                     padding: 10,
@@ -303,56 +327,83 @@ export const DashboardLayout = ({
                   }}
                   className="flex flex-wrap gap-2 items-center justify-center"
                 >
-                  <NotifItem
-                    name="VERIFIKASI"
-                    count={notif.verif}
-                    link="/proses/verif"
-                  />
-                  <NotifItem
-                    name="SLIK"
-                    count={notif.slik}
-                    link="/proses/slik"
-                  />
-                  <NotifItem
-                    name="APPROVAL"
-                    count={notif.approv}
-                    link="/proses/approv"
-                  />
-                  <NotifItem
-                    name="AKAD"
-                    count={notif.akad}
-                    link="/monitoring"
-                  />
-                  <NotifItem
-                    name="CETAK SI"
-                    count={notif.si}
-                    link="/pencairan/cetak"
-                  />
-                  <NotifItem
-                    name="DROPPING"
-                    count={notif.dropping}
-                    link="/pencairan/list"
-                  />
-                  <NotifItem
-                    name="CETAK PB"
-                    count={notif.cpb}
-                    link="/penyerahan-berkas/cetak"
-                  />
-                  <NotifItem
-                    name="PB"
-                    count={notif.pb}
-                    link="/penyerahan-berkas/list"
-                  />
-                  <NotifItem
-                    name="CETAK TBO"
-                    count={notif.ctbo}
-                    link="/penyerahan-jaminan/cetak"
-                  />
-                  <NotifItem
-                    name="TBO"
-                    count={notif.tbo}
-                    link="/penyerahan-jaminan/list"
-                  />
+                  {crossAccess("read", "/proses/verif") && (
+                    <NotifItem
+                      name="VERIFIKASI"
+                      count={notif.verif}
+                      link="/proses/verif"
+                    />
+                  )}
+                  {crossAccess("read", "/proses/slik") && (
+                    <NotifItem
+                      name="SLIK"
+                      count={notif.slik}
+                      link="/proses/slik"
+                    />
+                  )}
+                  {crossAccess("read", "/proses/approv") && (
+                    <NotifItem
+                      name="APPROVAL"
+                      count={notif.approv}
+                      link="/proses/approv"
+                    />
+                  )}
+                  {crossAccess("read", "/proses/akad") && (
+                    <NotifItem
+                      name="AKAD"
+                      count={notif.akad}
+                      link="/monitoring"
+                    />
+                  )}
+                  {crossAccess("read", "/pencairan/cetak") && (
+                    <NotifItem
+                      name="CETAK SI"
+                      count={notif.si}
+                      link="/pencairan/cetak"
+                    />
+                  )}
+                  {crossAccess("read", "/pencairan/list") && (
+                    <NotifItem
+                      name="DROPPING"
+                      count={notif.dropping}
+                      link="/pencairan/list"
+                    />
+                  )}
+                  {crossAccess("read", "/penyerahan-berkas/cetak") && (
+                    <NotifItem
+                      name="CETAK TTPB"
+                      count={notif.cpb}
+                      link="/penyerahan-berkas/cetak"
+                    />
+                  )}
+                  {crossAccess("read", "/penyerahan-berkas/list") && (
+                    <NotifItem
+                      name="TTPB"
+                      count={notif.pb}
+                      link="/penyerahan-berkas/list"
+                    />
+                  )}
+                  {crossAccess("read", "/penyerahan-jaminan/cetak") && (
+                    <NotifItem
+                      name="CETAK TTPJ"
+                      count={notif.ctbo}
+                      link="/penyerahan-jaminan/cetak"
+                    />
+                  )}
+                  {crossAccess("read", "/penyerahan-jaminan/list") && (
+                    <NotifItem
+                      name="TTPJ"
+                      count={notif.tbo}
+                      link="/penyerahan-jaminan/list"
+                    />
+                  )}
+                  {crossAccess("read", "/pelunasan") && (
+                    <NotifItem
+                      name="PELUNASAN"
+                      count={notif.pelunasan}
+                      link="/pelunasan"
+                    />
+                  )}
                 </div>
               )} // ⬅️ AntD v5 way
             >
@@ -360,16 +411,50 @@ export const DashboardLayout = ({
                 icon={
                   <Badge
                     count={
-                      notif.verif +
-                      notif.slik +
-                      notif.approv +
-                      notif.akad +
-                      notif.si +
-                      notif.dropping +
-                      notif.cpb +
-                      notif.pb +
-                      notif.ctbo +
-                      notif.tbo
+                      handleNotifCount({
+                        count: notif.verif,
+                        url: "/proses/verif",
+                      }) +
+                      handleNotifCount({
+                        count: notif.slik,
+                        url: "/proses/slik",
+                      }) +
+                      handleNotifCount({
+                        count: notif.approv,
+                        url: "/proses/approv",
+                      }) +
+                      handleNotifCount({
+                        count: notif.akad,
+                        url: "/monitoring",
+                      }) +
+                      handleNotifCount({
+                        count: notif.si,
+                        url: "/pencairan/cetak",
+                      }) +
+                      handleNotifCount({
+                        count: notif.dropping,
+                        url: "/pencairan/list",
+                      }) +
+                      handleNotifCount({
+                        count: notif.cpb,
+                        url: "/penyerahan-berkas/cetak",
+                      }) +
+                      handleNotifCount({
+                        count: notif.pb,
+                        url: "/penyerahan-berkas/list",
+                      }) +
+                      handleNotifCount({
+                        count: notif.ctbo,
+                        url: "/penyerahan-jaminan/cetak",
+                      }) +
+                      handleNotifCount({
+                        count: notif.tbo,
+                        url: "/penyerahan-jaminan/list",
+                      }) +
+                      handleNotifCount({
+                        count: notif.pelunasan,
+                        url: "/pelunasan",
+                      })
                     }
                     size="small"
                     showZero

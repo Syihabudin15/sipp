@@ -15,6 +15,7 @@ import {
   CalculatorFilled,
   CalculatorOutlined,
   CalendarOutlined,
+  CameraOutlined,
   ClockCircleOutlined,
   DollarCircleOutlined,
   DollarOutlined,
@@ -38,7 +39,8 @@ import {
   Tag,
 } from "antd";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toPng } from "html-to-image";
 
 export default function Page() {
   const [data, setData] = useState<IDapem>(defaultDapem);
@@ -98,7 +100,7 @@ export default function Page() {
 
   useEffect(() => {
     const { year, month, day } = getFullAge(
-      moment(data.tgl_lahir_penerima, "DD-MM-YYYY").format("YYYY-MM-DD"),
+      data.tgl_lahir_penerima,
       moment(data.created_at).format("YYYY-MM-DD")
     );
     const filterProd = produkss.filter(
@@ -132,7 +134,7 @@ export default function Page() {
       month: monthLunas,
       day: dayLunas,
     } = getFullAge(
-      moment(data.tgl_lahir_penerima, "DD-MM-YYYY").format("YYYY-MM-DD"),
+      data.tgl_lahir_penerima,
       moment(data.created_at).add(data.tenor, "month").format("YYYY-MM-DD")
     );
 
@@ -244,14 +246,12 @@ export default function Page() {
                   mode: "vertical",
                   required: true,
                   class: "flex-1",
-                  value: moment(data.tgl_lahir_penerima, "DD-MM-YYYY").format(
-                    "YYYY-MM-DD"
-                  ),
+                  value: data.tgl_lahir_penerima,
                   onChange: (e: string) =>
                     !isNaN(new Date(e).getDate()) &&
                     setData({
                       ...data,
-                      tgl_lahir_penerima: moment(e).format("DD-MM-YYYY"),
+                      tgl_lahir_penerima: moment(e).format("YYYY-MM-DD"),
                     }),
                 }}
               />
@@ -520,162 +520,188 @@ const CetakSimulasi = ({
   setOpen: Function;
   data: IDapem;
 }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const downloadImage = async () => {
+    if (!contentRef.current) return;
+
+    try {
+      const dataUrl = await toPng(contentRef.current);
+
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = Date.now() + ".png";
+      link.click();
+    } catch (err) {
+      console.error("Error exporting PNG:", err);
+    }
+  };
+
   return (
     <Modal
       open={open}
       onCancel={() => setOpen(false)}
       style={{ top: 20 }}
       width={1000}
-      footer={[]}
-      title={
-        <div className="text-center">
+      footer={[
+        <Button
+          key={"capture"}
+          icon={<CameraOutlined />}
+          type="primary"
+          onClick={() => downloadImage()}
+        >
+          Capture
+        </Button>,
+      ]}
+    >
+      <div ref={contentRef} className="bg-white p-4">
+        <div className="text-center font-bold text-xl my-2">
           <p>DETAIL PERMOHONAN PEMBIAYAAN</p>
         </div>
-      }
-    >
-      <Row gutter={[24, 24]}>
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <div className="flex gap-2 font-bold text-xl ">
-                <CalculatorOutlined />
-                <p>Permohonan Pembiayaan</p>
-              </div>
-            }
-            // style={{ backgroundColor: "#eeeeee" }}
-            styles={{
-              body: { padding: "0px 15px" },
-            }}
-          >
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Nama Pemohon</p>
-              <p>{data.nama}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Nomor Pensiun</p>
-              <p>{data.nopen}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Tanggal Lahir</p>
-              <p>{data.tgl_lahir_penerima}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Gaji Pensiun</p>
-              <p>{IDRFormat(data.gaji)}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Jenis Pembiayaan</p>
-              <p>{data.jenisPembiayaanId && data.JenisPembiayaan.name}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Produk Pembiayaan</p>
-              <p>
-                {data.produkPembiayaanId &&
-                  `${data.ProdukPembiayaan.id} ${data.ProdukPembiayaan.name}`}
-              </p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Plafond Permohonan</p>
-              <p>{IDRFormat(data.plafond)}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Tenor Permohonan</p>
-              <p>{data.tenor || "0"} Bulan</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Usia Saat Ini</p>
-              <p>
-                {data.usia_tahun || "0"} Tahun {data.usia_bulan || "0"} Bulan{" "}
-                {data.usia_hari || "0"} Hari
-              </p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Estimasi Usia Lunas</p>
-              <p>
-                {data.usia_tahun_lunas || "0"} Tahun{" "}
-                {data.usia_bulan_lunas || "0"} Bulan{" "}
-                {data.usia_hari_lunas || "0"} Hari
-              </p>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <div className="flex gap-2 font-bold text-xl ">
-                <CalculatorOutlined />
-                <p>Rincian Pembiayaan</p>
-              </div>
-            }
-            style={{ backgroundColor: "#eeeeee" }}
-            styles={{
-              body: { padding: "0px 15px" },
-            }}
-          >
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Biaya Administrasi</p>
-              <p>
-                {IDRFormat(
-                  data.plafond * ((data.c_adm + data.c_adm_sumdan) / 100)
-                )}
-              </p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Biaya Asuransi</p>
-              <p>{IDRFormat(data.plafond * (data.c_asuransi / 100))}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Biaya Tatalaksana</p>
-              <p>{IDRFormat(data.c_tatalaksana)}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Biaya Materai</p>
-              <p>{IDRFormat(data.c_materai)}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Biaya Buka Rekening</p>
-              <p>{IDRFormat(data.c_rekening)}</p>
-            </div>
-            <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
-              <p>Biaya Mutasi</p>
-              <p>{IDRFormat(data.c_mutasi)}</p>
-            </div>
-            <div className="flex justify-between border-b border-gray-400 p-1 items-center">
-              <p>Blokir Angsuran</p>
-              <p>{data.c_blokir}x</p>
-              <p>{IDRFormat(data.c_blokir * data.angsuran)}</p>
-            </div>
-            <div className="flex justify-between border-b border-gray-400 p-1 items-center">
-              <p>Nominal Takeover</p>
-              <p>{IDRFormat(data.c_pelunasan)}</p>
-            </div>
-            <div className="flex justify-between text-red-500 font-bold items-center">
-              <p>Total Biaya</p>
-              <p>{IDRFormat(data.total_biaya)}</p>
-            </div>
-            <div className="flex justify-between text-green-500 font-bold items-center">
-              <p>Terima Bersih</p>
-              <p>{IDRFormat(data.plafond - data.total_biaya)}</p>
-            </div>
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={12}>
             <Card
-              styles={{ body: { padding: 10 } }}
-              style={{ marginTop: 5, marginBottom: 5 }}
+              title={
+                <div className="flex gap-2 font-bold text-xl ">
+                  <CalculatorOutlined />
+                  <p>Permohonan Pembiayaan</p>
+                </div>
+              }
+              // style={{ backgroundColor: "#eeeeee" }}
+              styles={{
+                body: { padding: "0px 15px" },
+              }}
             >
-              <div className="flex justify-between items-center">
-                <p>Angsuran</p>
-                <Tag color={"blue"}>
-                  DSR {((data.angsuran / data.gaji) * 100).toFixed(2)}%
-                </Tag>
-                <p>{IDRFormat(data.angsuran)}</p>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Nama Pemohon</p>
+                <p>{data.nama}</p>
               </div>
-              <div className="flex justify-between items-center">
-                <p>Sisa Gaji Perbulan</p>
-                <p>{IDRFormat(data.gaji - data.angsuran)}</p>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Nomor Pensiun</p>
+                <p>{data.nopen}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Tanggal Lahir</p>
+                <p>{data.tgl_lahir_penerima}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Gaji Pensiun</p>
+                <p>{IDRFormat(data.gaji)}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Jenis Pembiayaan</p>
+                <p>{data.jenisPembiayaanId && data.JenisPembiayaan.name}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Produk Pembiayaan</p>
+                <p>
+                  {data.produkPembiayaanId &&
+                    `${data.ProdukPembiayaan.id} ${data.ProdukPembiayaan.name}`}
+                </p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Plafond Permohonan</p>
+                <p>{IDRFormat(data.plafond)}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Tenor Permohonan</p>
+                <p>{data.tenor || "0"} Bulan</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Usia Saat Ini</p>
+                <p>
+                  {data.usia_tahun || "0"} Tahun {data.usia_bulan || "0"} Bulan{" "}
+                  {data.usia_hari || "0"} Hari
+                </p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Estimasi Usia Lunas</p>
+                <p>
+                  {data.usia_tahun_lunas || "0"} Tahun{" "}
+                  {data.usia_bulan_lunas || "0"} Bulan{" "}
+                  {data.usia_hari_lunas || "0"} Hari
+                </p>
               </div>
             </Card>
-          </Card>
-        </Col>
-      </Row>
+          </Col>
+          <Col xs={24} lg={12}>
+            <Card
+              title={
+                <div className="flex gap-2 font-bold text-xl ">
+                  <CalculatorOutlined />
+                  <p>Rincian Pembiayaan</p>
+                </div>
+              }
+              style={{ backgroundColor: "#eeeeee" }}
+              styles={{
+                body: { padding: "0px 15px" },
+              }}
+            >
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Biaya Administrasi</p>
+                <p>
+                  {IDRFormat(
+                    data.plafond * ((data.c_adm + data.c_adm_sumdan) / 100)
+                  )}
+                </p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Biaya Asuransi</p>
+                <p>{IDRFormat(data.plafond * (data.c_asuransi / 100))}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Biaya Tatalaksana</p>
+                <p>{IDRFormat(data.c_tatalaksana)}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Biaya Materai</p>
+                <p>{IDRFormat(data.c_materai)}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Biaya Buka Rekening</p>
+                <p>{IDRFormat(data.c_rekening)}</p>
+              </div>
+              <div className="flex justify-between border-b border-dashed border-gray-400 p-1 items-center">
+                <p>Biaya Mutasi</p>
+                <p>{IDRFormat(data.c_mutasi)}</p>
+              </div>
+              <div className="flex justify-between border-b border-gray-400 p-1 items-center">
+                <p>Blokir Angsuran</p>
+                <p>{data.c_blokir}x</p>
+                <p>{IDRFormat(data.c_blokir * data.angsuran)}</p>
+              </div>
+              <div className="flex justify-between border-b border-gray-400 p-1 items-center">
+                <p>Nominal Takeover</p>
+                <p>{IDRFormat(data.c_pelunasan)}</p>
+              </div>
+              <div className="flex justify-between text-red-500 font-bold items-center">
+                <p>Total Biaya</p>
+                <p>{IDRFormat(data.total_biaya)}</p>
+              </div>
+              <div className="flex justify-between text-green-500 font-bold items-center">
+                <p>Terima Bersih</p>
+                <p>{IDRFormat(data.plafond - data.total_biaya)}</p>
+              </div>
+              <Card
+                styles={{ body: { padding: 10 } }}
+                style={{ marginTop: 5, marginBottom: 5 }}
+              >
+                <div className="flex justify-between items-center">
+                  <p>Angsuran</p>
+                  <Tag color={"blue"}>
+                    DSR {((data.angsuran / data.gaji) * 100).toFixed(2)}%
+                  </Tag>
+                  <p>{IDRFormat(data.angsuran)}</p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <p>Sisa Gaji Perbulan</p>
+                  <p>{IDRFormat(data.gaji - data.angsuran)}</p>
+                </div>
+              </Card>
+            </Card>
+          </Col>
+        </Row>
+      </div>
     </Modal>
   );
 };

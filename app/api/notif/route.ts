@@ -13,6 +13,11 @@ export const GET = async (req: NextRequest) => {
         akad: 0,
         si: 0,
         dropping: 0,
+        cpb: 0,
+        pb: 0,
+        ctbo: 0,
+        tbo: 0,
+        pelunasan: 0,
       },
       { status: 200 }
     );
@@ -29,6 +34,11 @@ export const GET = async (req: NextRequest) => {
         akad: 0,
         si: 0,
         dropping: 0,
+        cpb: 0,
+        pb: 0,
+        ctbo: 0,
+        tbo: 0,
+        pelunasan: 0,
       },
       { status: 200 }
     );
@@ -132,6 +142,17 @@ export const GET = async (req: NextRequest) => {
       }),
     ]);
 
+  const pelunasan = await prisma.pelunasan.count({
+    where: {
+      status_final: { in: ["ANTRI", "PROSES"] },
+      ...(findUser.sumdanId && {
+        Dapem: {
+          ProdukPembiayaan: { sumdanId: findUser.sumdanId },
+        },
+      }),
+    },
+  });
+
   return NextResponse.json(
     {
       verif: verif,
@@ -144,6 +165,7 @@ export const GET = async (req: NextRequest) => {
       pb,
       ctbo,
       tbo,
+      pelunasan,
     },
     { status: 200 }
   );

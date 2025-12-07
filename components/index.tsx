@@ -19,7 +19,10 @@ export const DetailDapem = dynamic(() => import("./DetailDapem"), {
   loading: () => <p>Loading...</p>,
 });
 
-export const PDFAkad = dynamic(() => import("./pdfs/Akad"), {
-  ssr: false,
-  loading: () => <p>Loading...</p>,
-});
+export const ViewFiles = dynamic(
+  () => import("./Utils").then((d) => d.ViewFiles),
+  {
+    ssr: false,
+    loading: () => <p>Loading...</p>,
+  }
+);

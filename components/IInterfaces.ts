@@ -1,10 +1,12 @@
 import {
+  Angsuran,
   Area,
   Cabang,
   Dapem,
   Debitur,
   JenisPembiayaan,
   Keluarga,
+  Pelunasan,
   Pencairan,
   PenyerahanBerkas,
   PenyerahanJaminan,
@@ -31,12 +33,18 @@ export interface INotif {
   pb: number;
   ctbo: number;
   tbo: number;
+  pelunasan: number;
 }
 
 export interface IPermission {
   name: string;
   path: string;
   access: string[];
+}
+
+export interface IViewFiles {
+  open: boolean;
+  data: { name: string; url: string }[];
 }
 
 export interface IActionTable<T> {
@@ -76,6 +84,10 @@ export interface IDapem extends Dapem {
   JenisPembiayaan: JenisPembiayaan;
   CreatedBy: User;
   AO: IAO;
+  PenyerahanBerkas: PenyerahanBerkas;
+  PenyerahanJaminan: PenyerahanJaminan;
+  Pelunasan: Pelunasan;
+  Angsuran: Angsuran[];
 }
 
 export interface IPencairan extends Pencairan {
@@ -90,7 +102,16 @@ export interface IPenyerahanJaminan extends PenyerahanJaminan {
   Dapem: IDapem[];
   Sumdan: Sumdan;
 }
-export interface IPemberkasan extends IDapem {
-  PenyerahanBerkas: PenyerahanBerkas | null;
-  PenyerahanJaminan: PenyerahanJaminan | null;
+
+export interface IPelunasan extends Pelunasan {
+  Dapem: IDapem;
+}
+
+export interface IDebitur extends Debitur {
+  Keluarga: Keluarga[];
+  Dapem: IDapem[];
+}
+
+export interface IAngsuran extends Angsuran {
+  Dapem: IDapem;
 }

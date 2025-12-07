@@ -1,11 +1,11 @@
 "use client";
 
 import { IDapem, IPageProps } from "@/components/IInterfaces";
-import { IDRFormat } from "@/components/Utils";
+import { getAngsuran, IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
 import {
   ArrowRightOutlined,
-  DropboxOutlined,
+  AuditOutlined,
   FormOutlined,
 } from "@ant-design/icons";
 import {
@@ -128,6 +128,44 @@ export default function Page() {
       },
     },
     {
+      title: "Angsuran",
+      dataIndex: "angsuran",
+      key: "angsuran",
+      render(value, record, index) {
+        return (
+          <div>
+            <p>
+              Total :{" "}
+              <Tag color={"blue"}>
+                {IDRFormat(
+                  getAngsuran(
+                    record.plafond,
+                    record.tenor,
+                    record.margin + record.margin_sumdan,
+                    record.pembulatan
+                  ).angsuran
+                )}
+              </Tag>
+            </p>
+            <p>
+              Sumdan :{" "}
+              <Tag color={"blue"}>
+                {" "}
+                {IDRFormat(
+                  getAngsuran(
+                    record.plafond,
+                    record.tenor,
+                    record.margin_sumdan,
+                    record.pembulatan
+                  ).angsuran
+                )}
+              </Tag>
+            </p>
+          </div>
+        );
+      },
+    },
+    {
       title: "Produk Pembiayaan",
       dataIndex: "produk",
       key: "produk",
@@ -149,18 +187,22 @@ export default function Page() {
       render(value, record, index) {
         return (
           <div>
-            <p>
-              Pelunasan Ke{" "}
-              <Tag color={"blue"}>
-                {record.pelunasan_ke} (
-                {moment(record.pelunasan_date).format("DD/MM/YYYY")})
-              </Tag>
-            </p>
-            <p>
-              Mutasi <Tag color={"red"}>{record.mutasi_from}</Tag>{" "}
-              <ArrowRightOutlined />{" "}
-              <Tag color={"success"}>{record.mutasi_ke}</Tag>
-            </p>
+            {record.JenisPembiayaan.status_pelunasan && (
+              <p>
+                Pelunasan Ke{" "}
+                <Tag color={"blue"}>
+                  {record.pelunasan_ke} (
+                  {moment(record.pelunasan_date).format("DD/MM/YYYY")})
+                </Tag>
+              </p>
+            )}
+            {record.JenisPembiayaan.status_mutasi && (
+              <p>
+                Mutasi <Tag color={"red"}>{record.mutasi_from}</Tag>{" "}
+                <ArrowRightOutlined style={{ fontSize: 10 }} />{" "}
+                <Tag color={"success"}>{record.mutasi_ke}</Tag>
+              </p>
+            )}
           </div>
         );
       },
@@ -210,11 +252,10 @@ export default function Page() {
             }}
             style={{ fontSize: 11 }}
           >
-            Keterangan{" "}
             {record.verif_date
               ? `(${moment(record.verif_date).format("DD-MM-YYYY HH:mm")})`
               : ""}{" "}
-            : {record.verif_desc}
+            {record.verif_desc}
           </Paragraph>
         </div>
       ),
@@ -248,11 +289,10 @@ export default function Page() {
             }}
             style={{ fontSize: 11 }}
           >
-            Keterangan{" "}
             {record.slik_date
               ? `(${moment(record.slik_date).format("DD-MM-YYYY HH:mm")})`
               : ""}{" "}
-            : {record.slik_desc}
+            {record.slik_desc}
           </Paragraph>
         </div>
       ),
@@ -286,11 +326,10 @@ export default function Page() {
             }}
             style={{ fontSize: 11 }}
           >
-            Keterangan{" "}
             {record.approv_date
               ? `(${moment(record.approv_date).format("DD-MM-YYYY HH:mm")})`
               : ""}{" "}
-            : {record.approv_desc}
+            {record.approv_desc}
           </Paragraph>
         </div>
       ),
@@ -330,7 +369,7 @@ export default function Page() {
     <Card
       title={
         <div className="flex gap-2 font-bold text-xl">
-          <DropboxOutlined /> Permohonan Pembiayaan
+          <AuditOutlined /> Proses Approval
         </div>
       }
       styles={{ body: { padding: 5 } }}

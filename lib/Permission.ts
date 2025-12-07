@@ -32,6 +32,13 @@ export function useAccess(path: string) {
     () => (action: string) => access.includes(action),
     [access]
   );
+  const crossAccess = useMemo(
+    () => (action: string, currPath: string) => {
+      const currAccess = getUserAccess(role!, currPath);
+      return currAccess.includes(action);
+    },
+    [access]
+  );
 
-  return { access, hasAccess };
+  return { access, hasAccess, crossAccess };
 }

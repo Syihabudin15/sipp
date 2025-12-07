@@ -58,7 +58,10 @@ export const POST = async (req: NextRequest) => {
       for (const dpm of Dapem) {
         await tx.dapem.update({
           where: { id: dpm.id },
-          data: { penyerahanJaminanId: penyerahanJaminan.id },
+          data: {
+            penyerahanJaminanId: penyerahanJaminan.id,
+            jaminan_status: "SENDING",
+          },
         });
       }
     });
@@ -89,7 +92,7 @@ export const PATCH = async (req: NextRequest) => {
       { status: 400 }
     );
 
-  const nomor = `TBO${String(count + 1).padStart(4, "0")}/${
+  const nomor = `TTPJ${String(count + 1).padStart(4, "0")}/${
     process.env.NEXT_PUBLIC_APP_SHORTNAME
   }-${sumdan.code.replace("BPR", "").replace(" ", "")}/${moment().format(
     "MMYYYY"

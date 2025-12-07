@@ -1,12 +1,14 @@
 "use client";
 
-import { FormInput } from "@/components";
+import { FormInput, ViewFiles } from "@/components";
 import {
   IActionTable,
   IDapem,
   IPageProps,
   IPenyerahanBerkas,
+  IViewFiles,
 } from "@/components/IInterfaces";
+import { printPB } from "@/components/pdfs/PenyerahanBerkas";
 import { IDRFormat } from "@/components/Utils";
 import { useAccess } from "@/lib/Permission";
 import {
@@ -50,6 +52,10 @@ export default function Page() {
     openUpsert: false,
     openDelete: false,
     selected: undefined,
+  });
+  const [views, setViews] = useState<IViewFiles>({
+    open: false,
+    data: [],
   });
   const { hasAccess } = useAccess("/penyerahan-berkas/list");
   const { modal } = App.useApp();
@@ -110,7 +116,7 @@ export default function Page() {
       dataIndex: ["Sumdan", "name"],
     },
     {
-      title: "Nomor PB",
+      title: "Nomor TTPB",
       key: "id",
       dataIndex: "id",
     },
@@ -163,7 +169,6 @@ export default function Page() {
             </Tag>
           </p>
           <p className="opacity-70 italic text-xs">
-            Tgl:{" "}
             {record.berkas_date
               ? moment(record.berkas_date).format("DD-MM-YYYY HH:mm")
               : ""}
@@ -197,26 +202,35 @@ export default function Page() {
               ></Button>
             )}
             {hasAccess("update") && (
-              <Tooltip title="Cetak SI">
+              <Tooltip title="Cetak Surat Penyerahan Berkas">
                 <Button
                   icon={<PrinterOutlined />}
                   size="small"
                   type="primary"
+                  onClick={() => printPB(record)}
                 ></Button>
               </Tooltip>
             )}
-            <Tooltip title="Berkas PB">
+            <Tooltip title="Berkas - Berkas">
               <Button
                 icon={<FileFilled />}
                 size="small"
                 disabled={!record.file_si}
-              ></Button>
-            </Tooltip>
-            <Tooltip title="Bukti Penerimaan">
-              <Button
-                icon={<FileFilled />}
-                size="small"
-                disabled={!record.file_proof}
+                onClick={() =>
+                  setViews({
+                    open: true,
+                    data: [
+                      {
+                        name: "Penyerahan Berkas",
+                        url: record.file_si || "",
+                      },
+                      {
+                        name: "Bukti Penerimaan",
+                        url: record.file_proof || "",
+                      },
+                    ],
+                  })
+                }
               ></Button>
             </Tooltip>
           </div>
@@ -437,6 +451,10 @@ export default function Page() {
           )}
         </Modal>
       )}
+      <ViewFiles
+        setOpen={(v: boolean) => setViews({ ...views, open: v })}
+        data={{ ...views }}
+      />
     </Card>
   );
 }
@@ -446,15 +464,6 @@ const columnDapem: TableProps<IDapem>["columns"] = [
     title: "ID",
     key: "id",
     dataIndex: "id",
-    width: 200,
-    render(value, record, index) {
-      return (
-        <div>
-          <p>{record.id}</p>
-          <p className="opacity-70">PK: {record.akad_nomor}</p>
-        </div>
-      );
-    },
   },
   {
     title: "Pemohon",
@@ -491,6 +500,19 @@ const columnDapem: TableProps<IDapem>["columns"] = [
         <div>
           <p>{IDRFormat(record.plafond)}</p>
           <p>{record.tenor} Bulan</p>
+        </div>
+      );
+    },
+  },
+  {
+    title: "Akad & Jaminan",
+    key: "akad",
+    dataIndex: "akad",
+    render(value, record, index) {
+      return (
+        <div>
+          <p>{record.akad_nomor}</p>
+          <p className="opacity-70 text-xs">{record.Debitur.no_skep}</p>
         </div>
       );
     },
