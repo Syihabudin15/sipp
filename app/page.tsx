@@ -50,10 +50,10 @@ export default function Page() {
                   }}
                 >
                   <Image
-                    src="/globe.svg"
+                    src={process.env.NEXT_PUBLIC_APP_LOGO || "app_logo.png"}
                     alt="Logo"
-                    width={40}
-                    height={40}
+                    width={70}
+                    height={70}
                     style={{ marginBottom: "8px" }}
                   />
                   <h2 className="font-bold text-xl mb-4">

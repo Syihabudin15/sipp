@@ -1109,7 +1109,7 @@ export default function Page({ defaultData }: { defaultData?: IDapemCreate }) {
                     {
                       ...defaultKeluarga,
                       nopen: data.nopen,
-                      id: Date.now().toString(),
+                      id: `${moment().format("YYMMDD_HH:mm:dd")}`,
                     },
                   ],
                 },

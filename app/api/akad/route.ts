@@ -67,23 +67,19 @@ export const POST = async (req: NextRequest) => {
         akad_date: data.akad_date,
         akad_nomor: data.akad_nomor,
       });
-      if (find.Angsuran.length === 0) {
-        await tx.angsuran.createMany({
-          data: generateAngsurans,
-        });
-        return generateAngsurans;
-      } else {
-        const newAngsurans = generateAngsurans.map((item) => ({
-          ...item,
-          tgl_bayar:
-            find.Angsuran.find((a) => a.ke === item.ke)?.tgl_bayar || null,
-        }));
-        await tx.angsuran.deleteMany({ where: { dapemId: data.id } });
-        await tx.angsuran.createMany({
-          data: newAngsurans,
-        });
-        return newAngsurans;
-      }
+      await tx.angsuran.deleteMany({ where: { dapemId: data.id } });
+      const newAngsurans =
+        find.Angsuran && find.Angsuran.length !== 0
+          ? generateAngsurans.map((item) => ({
+              ...item,
+              tgl_bayar:
+                find.Angsuran.find((a) => a.ke === item.ke)?.tgl_bayar || null,
+            }))
+          : generateAngsurans;
+      await tx.angsuran.createMany({
+        data: newAngsurans,
+      });
+      return newAngsurans;
     });
     return NextResponse.json(
       { msg: "Berhasil memperbarui data akad!", status: 200, data: result },
